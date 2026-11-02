@@ -1,7 +1,7 @@
 # CPUMeter — Requirements
 
-**Version:** 1.3
-**Changelog:** v1.3 (Nov 2, 2026) — added **FR-8d**: each group label ends in " %", so it is clear the per-core figures are percentages. Chris's request when approving the UI design. FR-8c's single row now has a label too, FR-3b makes room for the longer labels, and FR-11 and §§6 and 8 are updated to match. v1.2 (Nov 2, 2026) — revised **FR-3** and **FR-11** to support up to 36 cores, the current Mac maximum. Height stays fixed at each size and width fits the Mac's core count, so per-core figures now appear at every size on every Mac. Chris's request and choice during the UI design stage. Also updated NFR-4 and §§6, 8 and 9 to match, and FR-27 records Chris's top-row choice. v1.1 (Nov 2, 2026) — added **FR-28**: the bar colors default to blue and orange and can be changed with the macOS system color chooser, opened from View → Colors. Chris's request during the UI design stage. Also updated FR-9, FR-24, NFR-5 and §§6–8 to match. v1.0 (Nov 2, 2026) — approved by Chris with no changes to the v0.1 draft, including the §8 decisions. v0.1 (Nov 2, 2026) — initial draft, from Chris's project brief and the question-by-question review of Nov 1–2, 2026.
+**Version:** 1.5
+**Changelog:** v1.5 (Nov 2, 2026) — the M4 is now the primary test machine, and the M1 is tested when a check needs it. The app icon is Chris's to create. Both are Chris's instructions when approving the build plan. v1.4 (Nov 2, 2026) — §6 now lists a third small use of AppKit: measuring group labels for FR-3b. Found while writing the build plan. v1.3 (Nov 2, 2026) — added **FR-8d**: each group label ends in " %", so it is clear the per-core figures are percentages. Chris's request when approving the UI design. FR-8c's single row now has a label too, FR-3b makes room for the longer labels, and FR-11 and §§6 and 8 are updated to match. v1.2 (Nov 2, 2026) — revised **FR-3** and **FR-11** to support up to 36 cores, the current Mac maximum. Height stays fixed at each size and width fits the Mac's core count, so per-core figures now appear at every size on every Mac. Chris's request and choice during the UI design stage. Also updated NFR-4 and §§6, 8 and 9 to match, and FR-27 records Chris's top-row choice. v1.1 (Nov 2, 2026) — added **FR-28**: the bar colors default to blue and orange and can be changed with the macOS system color chooser, opened from View → Colors. Chris's request during the UI design stage. Also updated FR-9, FR-24, NFR-5 and §§6–8 to match. v1.0 (Nov 2, 2026) — approved by Chris with no changes to the v0.1 draft, including the §8 decisions. v0.1 (Nov 2, 2026) — initial draft, from Chris's project brief and the question-by-question review of Nov 1–2, 2026.
 **Date:** November 2, 2026
 **Owner:** Chris
 **Status:** **v1.0 approved by Chris, Nov 2, 2026; v1.1 adds Chris's color request; v1.2 adds Chris's 36-core sizing; v1.3 adds Chris's percent labels.** Nothing is built yet. The UI design in `cpu-widget-ui-design.md` was approved by Chris on Nov 2, 2026.
@@ -119,7 +119,7 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
   - Apple's documentation says a frequently viewed widget typically gets 40–70 refreshes a day, and that timeline entries should be at least about 5 minutes apart.
   - Chris's installed ClaudeUsageWidget does better than that on this Mac. It requests a refresh every 5 minutes and measured a median gap of 5 minutes 20 seconds, or 251–271 reloads a day, from macOS's widget scheduler logs of Oct 25 – Nov 1, 2026.
   - That is still far slower than 1–5 seconds. Whether a widget can refresh faster than every 5 minutes was not tested, because the refresh-rate requirement made the test unnecessary.
-- **Language / UI:** Swift and SwiftUI, using a single `Window` scene. Keep on Top uses `.windowLevel`, and the fixed sizes use `.windowResizability(.contentSize)`; both are in the macOS 27 SDK, and runtime switching will be confirmed in the first increments. AppKit is used for only two things, with no `NSWindow` hosting: observing `NSWindow.didChangeOcclusionStateNotification` for FR-17, and `NSColorPanel` for FR-28, because SwiftUI's `ColorPicker` is a control inside a window and FR-26 keeps the window free of controls.
+- **Language / UI:** Swift and SwiftUI, using a single `Window` scene. Keep on Top uses `.windowLevel`, and the fixed sizes use `.windowResizability(.contentSize)`; both are in the macOS 27 SDK, and runtime switching will be confirmed in the first increments. AppKit is used for only three things, with no `NSWindow` hosting: observing `NSWindow.didChangeOcclusionStateNotification` for FR-17; `NSColorPanel` for FR-28, because SwiftUI's `ColorPicker` is a control inside a window and FR-26 keeps the window free of controls; and measuring group labels at launch for FR-3b, because the window's size has to be known before anything is drawn.
 - **Drawing:** SwiftUI `Canvas` first, as in DriveSpeed, and never Charts. If Canvas proves costly, Core Animation is the fallback.
 - **Project identity:** product name `CPUMeter`; bundle identifier `com.arc3solutions.CPUMeter`; Xcode project at `CPUMeter/CPUMeter.xcodeproj`; team `5JC55GTLZA`, automatic signing, App Sandbox and hardened runtime on.
 - **Minimum OS:** macOS 27.0. **Architecture:** Apple Silicon (`arm64`) only. **Toolchain:** Xcode 27.2, at `/Applications/Development/Xcode.app`.
@@ -127,7 +127,7 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
 - **Core-type lookup:** IORegistry `IODeviceTree:/cpus`, reading `logical-cpu-id` and `cluster-type` from each core entry, with group names and counts from `hw.nperflevels` and `hw.perflevelN.name` / `.logicalcpu`.
   - **Measured on the M4:** logical IDs 0–5 are Efficiency and 6–9 are Performance, while `hw.perflevel0` is Performance. The two numberings run in opposite directions, so assuming they match would mislabel every bar.
   - **Matching groups by core count alone won't work:** the M1 and M3 have 4 of each type, so their counts tie.
-  - **Proposed rule, verified so far only on the M4:** walk the logical IDs in ascending order, treat each run of one `cluster-type` as a group, assign performance levels from the highest level number down, and confirm the counts agree. If they don't, FR-8c applies. The first increment runs this on both Mac minis.
+  - **Proposed rule, verified so far only on the M4:** walk the logical IDs in ascending order, treat each run of one `cluster-type` as a group, assign performance levels from the highest level number down, and confirm the counts agree. If they don't, FR-8c applies. Increment 1.2 of the build plan runs this on both Mac minis.
 - **Window widths from FR-3b, in points.** The rule doesn't depend on this list. The M5 family's core counts were checked against published specs on Nov 2, 2026; older chips have not been checked.
 
 | Cores | Macs | Small | Medium | Large |
@@ -155,11 +155,11 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
 | Mac | CPU cores | Role | Core counts |
 |---|---|---|---|
 | M4 Mac mini, macOS 27.0.1 | 10 (4 Performance, 6 Efficiency) | Primary, every test | Measured |
-| 2020 M1 Mac mini, macOS 27 | 8 (4 Performance, 4 Efficiency) | Primary, every test | Apple's specs; confirm on the machine |
+| 2020 M1 Mac mini, macOS 27 | 8 (4 Performance, 4 Efficiency) | Secondary: tested when a check needs it, as the build plan sets out | Apple's specs; confirm on the machine |
 | 15-inch M3 MacBook Air | 8 (4 Performance, 4 Efficiency) | One check near the end: energy use on battery, and the window on a built-in display with a notch | Apple's specs; confirm on the machine |
 
   **Simulated only:** core counts other than 8 and 10, meaning 6 cores and everything from 11 to 36, and core-type names other than Performance and Efficiency. The README and release notes must state what was and wasn't tested.
-- **Repository:** follows NetSpeed and DriveSpeed. Public repo `chrisARC3/macos-cpumeter` on `main`, MIT license © 2026 ARC3 Solutions, `docs/cpu-widget-requirements.md`, `docs/cpu-widget-ui-design.md` and `docs/cpu-widget-build-plan.md`, icon sources in `design/`, and a gitignored `NEXT-SESSION-HANDOFF.md`. The README's "Note From The Human" section is Chris's to write. The repo was created on Nov 2, 2026.
+- **Repository:** follows NetSpeed and DriveSpeed. Public repo `chrisARC3/macos-cpumeter` on `main`, MIT license © 2026 ARC3 Solutions, `docs/cpu-widget-requirements.md`, `docs/cpu-widget-ui-design.md` and `docs/cpu-widget-build-plan.md`, and a gitignored `NEXT-SESSION-HANDOFF.md`. The app icon is Chris's to create, separately. The README's "Note From The Human" section is Chris's to write. The repo was created on Nov 2, 2026.
 
 ## 7. Deferred / Future Considerations
 
@@ -202,4 +202,4 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
 
 ---
 
-*Next step: `cpu-widget-build-plan.md` breaks the work into small, verifiable increments.*
+*Next step: Increment 0.1 of `cpu-widget-build-plan.md`.*

@@ -3,7 +3,7 @@
 **Date:** November 2, 2026
 **Owner:** Chris
 **Status:** Approved by Chris on Nov 2, 2026, with the percent labels in §1 added at approval. Nothing is built yet.
-**Requirements:** [cpu-widget-requirements.md](cpu-widget-requirements.md), v1.3. If the two disagree, the requirements win.
+**Requirements:** [cpu-widget-requirements.md](cpu-widget-requirements.md), v1.5. If the two disagree, the requirements win.
 **Design canvas:** https://claude.ai/artifact/UHY36UTxX5jYKkNp33nCYa (private to Chris). It holds the true-size mockups; this document holds the numbers the build uses.
 
 All dimensions are in points.
@@ -127,7 +127,7 @@ Measured on the M4 Mac mini with macOS 27, from real system text. Its display is
 
 ## 9. To Confirm in the Real App
 
-The canvas is a browser mockup, so these need checking in the first increments on both Mac minis:
+The canvas is a browser mockup, so these need checking in the real app, at the increments the build plan sets out:
 
 - Text and bar edges on a scale 1.0 display, which is the M4 mini's and the harder case for small text.
 - That `Canvas` text matches the widths measured in §7. If it doesn't, the figures need another look at full load.
@@ -138,4 +138,4 @@ Core counts other than 8 and 10 can only be checked with simulated data.
 
 ---
 
-*Next step: `cpu-widget-build-plan.md` breaks the work into small, verifiable increments.*
+*Next step: Increment 0.1 of `cpu-widget-build-plan.md`.*

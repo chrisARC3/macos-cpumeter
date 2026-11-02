@@ -8,10 +8,10 @@ It measures usage **passively**: it reads the operating system's per-core counte
 and computes the change each interval. It keeps no history and needs no elevated
 privileges.
 
-> **Status: design stage. Nothing is built yet.** The requirements and UI design are
-> approved. See
-> [`docs/cpu-widget-requirements.md`](docs/cpu-widget-requirements.md) and
-> [`docs/cpu-widget-ui-design.md`](docs/cpu-widget-ui-design.md).
+> **Status: in development. Not usable yet.** The
+> [requirements](docs/cpu-widget-requirements.md),
+> [UI design](docs/cpu-widget-ui-design.md) and
+> [build plan](docs/cpu-widget-build-plan.md) are approved.
 
 ## Planned features
 
