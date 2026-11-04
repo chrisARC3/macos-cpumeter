@@ -32,6 +32,32 @@ struct CPUMeterApp: App {
     /// Closes the window for File → Close.
     @Environment(\.dismissWindow) private var dismissWindow
 
+    #if DEBUG
+    /// TEMPORARY (Increment 1.1, removed in 1.3): shows that the sandboxed app
+    /// reads the counters. Prints each core's raw total at launch, then each
+    /// core's tick change over the next second.
+    init() {
+        guard let first = CoreCounters.read() else {
+            print("CPUMeter 1.1 check: counter read failed")
+            return
+        }
+        let start = Date()
+        let totals = first.map { String(UInt64($0.user) + UInt64($0.system) + UInt64($0.idle) + UInt64($0.nice)) }
+        print(String(format: "CPUMeter 1.1 check: %d cores, t=%.3f raw totals: ", first.count,
+                     start.timeIntervalSince1970) + totals.joined(separator: " "))
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            guard let second = CoreCounters.read(),
+                  let changes = CoreCounters.changes(from: first, to: second) else {
+                print("CPUMeter 1.1 check: second read failed")
+                return
+            }
+            let perCore = changes.map { "\($0.user)/\($0.system)/\($0.idle)" }
+            print(String(format: "CPUMeter 1.1 check: change over %.2f s, user/system/idle: ",
+                         Date().timeIntervalSince(start)) + perCore.joined(separator: "  "))
+        }
+    }
+    #endif
+
     var body: some Scene {
         // A single, unique floating window (FR-1). `Window`, not `WindowGroup`,
         // because this is a one-window app, and because closing a lone `Window`

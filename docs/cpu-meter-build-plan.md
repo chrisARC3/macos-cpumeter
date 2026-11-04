@@ -5,7 +5,7 @@
 **Date:** November 4, 2026
 **Companion to:** `cpu-meter-requirements.md` (v1.7) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1, reading the counters, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2, core types, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -25,7 +25,7 @@ Requirement IDs (FR-#, NFR-#) reference `cpu-meter-requirements.md`. Results are
 
 **Test machines.** The M4 is the primary test machine, and every increment is confirmed there. *(Chris's instruction, Nov 2, 2026.)*
 
-**The M1 pass.** The M1 mini is tested when a check needs it: at the end of each phase, and in 1.2 and 1.3, where its equal core counts are the point of the test. When a build is needed there, Claude copies it automatically to the M1's Drop Box, through the Public folder Chris keeps mounted on the M4, and tells Chris its name. Chris then runs it on the M1. If the folder isn't mounted, Claude says so and doesn't copy it anywhere else. The build is a zip named with its increment and commit, such as `CPUMeter-1.2-5d90544.zip`, so builds never overwrite each other. It isn't notarized, so macOS may ask for Open Anyway in System Settings → Privacy & Security the first time. This route hasn't been tried yet; the end of Phase 0 is its first use.
+**The M1 pass.** The M1 mini is tested when a check needs it: at the end of each phase, and in 1.2 and 1.3, where its equal core counts are the point of the test. When a build is needed there, Claude copies it automatically to the M1's Drop Box, through the Public folder Chris keeps mounted on the M4, and tells Chris its name. Chris then runs it on the M1. If the folder isn't mounted, Claude says so and doesn't copy it anywhere else. The build is a zip named with its increment and commit, such as `CPUMeter-1.2-5d90544.zip`, so builds never overwrite each other. It isn't notarized, so macOS may ask for Open Anyway in System Settings → Privacy & Security the first time. This route was first used at the end of Phase 0, for 0.3 on Nov 4, 2026, and worked.
 
 **Commits.** One commit per confirmed increment, named "Increment N.N — …", and every commit is pushed right away. *(Chris's instruction, Nov 2, 2026.)*
 
@@ -175,6 +175,15 @@ The window comes first because it holds the biggest unknowns. The requirements a
 - **Build:** `CoreCounters.swift`: a `nonisolated` read of user, system, idle and nice ticks for each core, and a pure function for the wrapping change between two reads. Every read frees the array macOS returns with `vm_deallocate`, because missing that would leak memory on every tick and break NFR-1.
 - **Verify:** A headless driver compiles the real file and checks the arithmetic, including `0xFFFFFFF0` → `0x00000010`, identical reads, and nice counted as user. It also reads live counters and shows them advancing about 100 ticks per second per core. A run of 100,000 reads shows flat memory.
 - **Done when:** All checks pass, and a sandboxed build reads the same values.
+- **Result, Claude's checks (Nov 4, 2026):** `CoreCounters.swift` has `CoreTicks`, `TickChange` (nice counted as user, and a total for 1.3 to divide by), `read()` and the wrapping change. It keeps the host port, fetched once, because each `mach_host_self()` call adds a reference.
+  - Compiled alone with a test driver under Swift 6 and the project's main-actor default, with no warnings. 12 checks pass:
+    - arithmetic: `0xFFFFFFF0` → `0x00000010` gives 32, every counter wrapping at once, identical reads giving zero, nice counted as user, mismatched core counts refused, and cores paired in order;
+    - live: 10 cores at 99–100 ticks a second each;
+    - 100,000 reads, none failed, at 3.38 µs each, with the memory footprint flat at 1,904 KB and the host port's references flat.
+  - A deliberately leaky copy fails both of those last checks. It skips `vm_deallocate` and calls `mach_host_self()` on every read. Memory grows from 18 MB to 1.6 GB, and references climb to the 65,535 limit.
+  - Debug and Release clean builds, with no compiler warnings.
+  - A temporary launch print in `CPUMeterApp.swift`, Debug only and absent from the Release binary, shows the sandboxed app read 10 cores and about 105 ticks per core over 1.05 s. The unsandboxed driver, reading 3.48 s later, found every core 345–349 ticks further on, matching the time between the two reads, so both read the same counters.
+  - **Confirmed by Chris** (Nov 4, 2026).
 
 ### Increment 1.2 — Core types
 - **Goal:** Correct groups, names and order, on both Macs. **This is the first real test of the core-type rule on the M1.** (FR-6, FR-8, FR-8a, FR-8b, FR-8c)
@@ -187,7 +196,7 @@ The window comes first because it holds the biggest unknowns. The requirements a
 
 ### Increment 1.3 — Sample on a timer
 - **Goal:** Live percentages that match the test loads, and proof the group labels are right. (FR-8b, FR-9, FR-10, FR-12, FR-14, FR-15, NFR-6)
-- **Build:** `CPUSampler.swift`, an `@Observable`, main-actor class like DriveSpeed's `SpeedSampler`: the baseline is primed in `start()`, and the timer tolerance is 10% of the interval. The timer runs in the run loop's common modes, unlike DriveSpeed's, so the bars keep updating while a menu is open. That matters here because every control is in the menu bar. Each tick computes user and system percentages per core and the overall figure from raw ticks, all from one read. A temporary console line prints the overall figure and each group's average.
+- **Build:** `CPUSampler.swift`, an `@Observable`, main-actor class like DriveSpeed's `SpeedSampler`: the baseline is primed in `start()`, and the timer tolerance is 10% of the interval. The timer runs in the run loop's common modes, unlike DriveSpeed's, so the bars keep updating while a menu is open. That matters here because every control is in the menu bar. Each tick computes user and system percentages per core and the overall figure from raw ticks, all from one read. A temporary console line prints the overall figure and each group's average. It replaces 1.1's temporary launch print.
 - **Verify:** Headless checks for the percentage math, the zero-tick case and the overall figure. Then each test load, compared with the table above and with Activity Monitor by trend. The "Efficiency cores only" load must raise only the Efficiency group, on both the M4 and the M1.
 - **Done when:** Figures follow every load, and the labels are proven right on both Macs. **Completes Phase 1.**
 
