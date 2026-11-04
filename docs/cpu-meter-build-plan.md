@@ -81,6 +81,7 @@ The "Efficiency cores only" load is what proves the group labels are right. A ba
 | `SimulatedCores.swift` | Other core counts, Debug builds only | 2.3 |
 | `BarColors.swift` | Chosen colors and the system color chooser | 3.2 |
 | `Assets.xcassets/AppIcon` | App icon, from Chris's artwork | 5.1 |
+| `design/AllIcons.jpeg` | Chris's original icon sheet, which the AppIcon images are cut from | 5.1 |
 | `README.md` | Rewritten once the app exists | 5.5 |
 | `NEXT-SESSION-HANDOFF.md` | Working note, local and gitignored | As needed |
 
@@ -209,6 +210,7 @@ The window comes first because it holds the biggest unknowns. The requirements a
 - **Build:** Chris creates the icon separately and tells Claude when it's finished. Claude then adds it to `Assets.xcassets/AppIcon`. This increment runs whenever the icon is ready and doesn't hold up any other increment, but the v1.0 release in 5.5 includes it. *(Chris's instruction, Nov 2, 2026.)*
 - **Verify:** Chris checks it in the Dock and in Finder.
 - **Done when:** Chris approves it.
+- **Result (Nov 4, 2026):** Chris's artwork arrived as one sheet of six drawings on a dark background, labelled 512 down to 16. It's kept as `design/AllIcons.jpeg`. Each drawing was cut out of the background, and each icon size uses the drawing labelled for it, with the 1024-pixel size taken from the largest. Every drawing is larger than its label, so nothing was enlarged. As drawn, the icon was put inside a gray rounded square by macOS 27, because the chip's outline isn't Apple's standard shape. Chris chose a version stretched to Apple's 824-of-1024 tile and clipped to its corners. That trims the outer pin tips and leaves the shadow to macOS, which then shows the icon full size. `xcodebuild` is clean. The first run from Xcode still showed the blank icon, because macOS caches an app's icon by the `.app` folder's path and date, and an Xcode rebuild doesn't change the folder's date. Touching the built `.app` fixed it. **Confirmed by Chris** (Nov 4, 2026): the new icon shows in the Dock and the About box.
 
 ### Increment 5.2 — Footprint
 - **Goal:** Measure and report the real cost. There's no pass or fail ceiling. (NFR-1)
