@@ -1,11 +1,11 @@
 # CPUMeter — Requirements
 
-**Version:** 1.6
-**Changelog:** v1.6 (Nov 2, 2026) — the project folder and these documents now say "meter" rather than "widget", at Chris's request, because the product is a meter. They were `CPU-widget` and `cpu-widget-*.md`. No requirement changed. v1.5 (Nov 2, 2026) — the M4 is now the primary test machine, and the M1 is tested when a check needs it. The app icon is Chris's to create. Both are Chris's instructions when approving the build plan. v1.4 (Nov 2, 2026) — §6 now lists a third small use of AppKit: measuring group labels for FR-3b. Found while writing the build plan. v1.3 (Nov 2, 2026) — added **FR-8d**: each group label ends in " %", so it is clear the per-core figures are percentages. Chris's request when approving the UI design. FR-8c's single row now has a label too, FR-3b makes room for the longer labels, and FR-11 and §§6 and 8 are updated to match. v1.2 (Nov 2, 2026) — revised **FR-3** and **FR-11** to support up to 36 cores, the current Mac maximum. Height stays fixed at each size and width fits the Mac's core count, so per-core figures now appear at every size on every Mac. Chris's request and choice during the UI design stage. Also updated NFR-4 and §§6, 8 and 9 to match, and FR-27 records Chris's top-row choice. v1.1 (Nov 2, 2026) — added **FR-28**: the bar colors default to blue and orange and can be changed with the macOS system color chooser, opened from View → Colors. Chris's request during the UI design stage. Also updated FR-9, FR-24, NFR-5 and §§6–8 to match. v1.0 (Nov 2, 2026) — approved by Chris with no changes to the v0.1 draft, including the §8 decisions. v0.1 (Nov 2, 2026) — initial draft, from Chris's project brief and the question-by-question review of Nov 1–2, 2026.
-**Date:** November 2, 2026
+**Version:** 1.7
+**Changelog:** v1.7 (Nov 4, 2026) — §6 adds a fourth use of AppKit: direct access to CPUMeter's own window, to set its level for Keep on Top (FR-2), keep it on screen after a size change (FR-22) and snap drag resizing to the three sizes. Increment 0.2 found that SwiftUI's `.windowLevel` didn't keep the window on top at launch, and that SwiftUI can't move a window once it's open. Added **FR-3d**: the window can be resized by dragging, and settles at the nearest of the three sizes when the drag ends. FR-25 keeps File → Close. §§2, 3 and 8 and FR-3 and FR-22 are updated to match. All are Chris's decisions, Nov 4, 2026. v1.6 (Nov 2, 2026) — the project folder and these documents now say "meter" rather than "widget", at Chris's request, because the product is a meter. They were `CPU-widget` and `cpu-widget-*.md`. No requirement changed. v1.5 (Nov 2, 2026) — the M4 is now the primary test machine, and the M1 is tested when a check needs it. The app icon is Chris's to create. Both are Chris's instructions when approving the build plan. v1.4 (Nov 2, 2026) — §6 now lists a third small use of AppKit: measuring group labels for FR-3b. Found while writing the build plan. v1.3 (Nov 2, 2026) — added **FR-8d**: each group label ends in " %", so it is clear the per-core figures are percentages. Chris's request when approving the UI design. FR-8c's single row now has a label too, FR-3b makes room for the longer labels, and FR-11 and §§6 and 8 are updated to match. v1.2 (Nov 2, 2026) — revised **FR-3** and **FR-11** to support up to 36 cores, the current Mac maximum. Height stays fixed at each size and width fits the Mac's core count, so per-core figures now appear at every size on every Mac. Chris's request and choice during the UI design stage. Also updated NFR-4 and §§6, 8 and 9 to match, and FR-27 records Chris's top-row choice. v1.1 (Nov 2, 2026) — added **FR-28**: the bar colors default to blue and orange and can be changed with the macOS system color chooser, opened from View → Colors. Chris's request during the UI design stage. Also updated FR-9, FR-24, NFR-5 and §§6–8 to match. v1.0 (Nov 2, 2026) — approved by Chris with no changes to the v0.1 draft, including the §8 decisions. v0.1 (Nov 2, 2026) — initial draft, from Chris's project brief and the question-by-question review of Nov 1–2, 2026.
+**Date:** November 4, 2026
 **Owner:** Chris
-**Status:** **v1.0 approved by Chris, Nov 2, 2026; v1.1 adds Chris's color request; v1.2 adds Chris's 36-core sizing; v1.3 adds Chris's percent labels.** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026; Increment 0.2 is next. The UI design in `cpu-meter-ui-design.md` was approved by Chris on Nov 2, 2026.
-**Lineage:** Sibling to NetSpeed and DriveSpeed. It carries over their window behavior, persistence, project layout and refresh choices. The differences are live bars instead of a rolling graph, three fixed window sizes, menus in the Mac menu bar, a Keep on Top option, and bar colors the user can change.
+**Status:** **v1.0 approved by Chris, Nov 2, 2026; v1.1 adds Chris's color request; v1.2 adds Chris's 36-core sizing; v1.3 adds Chris's percent labels; v1.7 adds Chris's window access and snap resizing decisions, Nov 4, 2026.** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026. Increment 0.2 was first tested on the M4 the same day and is being fixed under v1.7; Increment 0.3 adds snap resizing. The UI design in `cpu-meter-ui-design.md` was approved by Chris on Nov 2, 2026.
+**Lineage:** Sibling to NetSpeed and DriveSpeed. It carries over their window behavior, persistence, project layout and refresh choices. The differences are live bars instead of a rolling graph, three set window sizes, menus in the Mac menu bar, a Keep on Top option, and bar colors the user can change.
 
 ---
 
@@ -19,7 +19,7 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
 
 - See at a glance how busy each core is, and which type of core, without opening Activity Monitor.
 - Use as few system resources as reasonably possible.
-- Stay out of the way: small, a fixed size, and it remembers where I put it.
+- Stay out of the way: small, one of three set sizes, and it remembers where I put it.
 
 ## 3. Non-Goals (v1)
 
@@ -28,7 +28,7 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
 - No GPU, memory, temperature, frequency or per-process data.
 - No logging.
 - No menu bar item.
-- No drag resizing, multi-window support or adjustable transparency.
+- No free drag resizing: dragging snaps to one of the three sizes (FR-3d). No multi-window support or adjustable transparency.
 - No built-in launch-at-login; add CPUMeter via System Settings → General → Login Items. *(Same as DriveSpeed.)*
 - No Intel Macs and no macOS earlier than 27.
 
@@ -37,10 +37,11 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
 ### 4.1 Form factor
 - FR-1: The app presents a single **floating window** the user can position anywhere on screen. It is not a WidgetKit widget.
 - FR-2: **View → Keep on Top** floats the window above other windows. It is **on at first launch**, and the choice is remembered across launches. When off, the window behaves as a normal window that others can cover.
-- FR-3: The window has **three fixed sizes: Small, Medium and Large**, chosen from **View → Size**. There is no drag resizing. Each size's dimensions depend only on the Mac's core count, and support runs to **36 cores**, the current Mac maximum. *(Chris's request and choice, Nov 2, 2026.)*
+- FR-3: The window has **three sizes: Small, Medium and Large**, chosen from **View → Size** or by dragging (FR-3d). It never rests at any other size. Each size's dimensions depend only on the Mac's core count, and support runs to **36 cores**, the current Mac maximum. *(Chris's request and choice, Nov 2, 2026.)*
   - FR-3a: **Height is fixed** at each size: 150, 225 and 300 points of content, below the 32-point title bar.
   - FR-3b: **Width fits the core count.** It is the larger of the base width and the width the bars need: 2 × margin, plus gap between groups × (groups − 1), plus cores × width per core. Width per core is the minimum in the table below, or more if a group's label wouldn't otherwise fit within that group. Labels are measured at launch, because their names come from macOS, and the width is rounded up to a whole point. §6 lists the result for each Mac.
   - FR-3c: **The core count is read at every launch and never stored**, so the width stays correct if settings move to a different Mac. The saved setting is the size's name (FR-20), not its width.
+  - FR-3d: **Dragging snaps to the three sizes.** The window's edges and corners can be dragged anywhere between Small and Large, and when the drag ends the window settles at the nearest of the three sizes, which becomes the chosen size. The edge or corner opposite the one dragged stays in place, subject to FR-22's on-screen rule. `cpu-meter-ui-design.md` sets how "nearest" is judged. *(Chris's request, Nov 4, 2026.)*
 
 | Points | Small | Medium | Large |
 |---|---|---|---|
@@ -83,12 +84,12 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
 - FR-19: **Remember window position** across launches and restarts.
 - FR-20: **Remember the chosen size** across launches and restarts.
 - FR-21: On the **very first launch**, the window opens at **Medium** in the **top-left** of the screen.
-- FR-22: **Switching size keeps the window's top-left corner in place**, unless that would push the window off screen.
+- FR-22: **Switching size from View → Size keeps the window's top-left corner in place**, unless that would push the window off screen. In that case the window moves just far enough to stay within the screen's visible area, clear of the menu bar and Dock. The same rule keeps the window on screen after a drag snaps it (FR-3d).
 - FR-23: **Closing the window quits the app.** Relaunch to bring it back. *(Same as DriveSpeed FR-16.)*
 
 ### 4.6 Menus and layout
 - FR-24: **View** holds Size, Refresh Rate, Colors and Keep on Top, with the current size, rate and Keep on Top state checked.
-- FR-25: Menu items that don't apply to a one-window app, such as New Window, are removed.
+- FR-25: Menu items that don't apply to a one-window app, such as New Window, are removed. **File keeps Close** (⌘W), which quits like the close button (FR-23).
 - FR-26: **All controls are in the Mac menu bar.** The window contains only the display, so all of its space is available for bars and figures.
 - FR-27: Layout is a **top row with the overall figure on the left and the color key on the right**, then group labels, bars and per-core figures. *(Chris's choice, Nov 2, 2026.)* `cpu-meter-ui-design.md` sets the details.
 
@@ -119,7 +120,13 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
   - Apple's documentation says a frequently viewed widget typically gets 40–70 refreshes a day, and that timeline entries should be at least about 5 minutes apart.
   - Chris's installed ClaudeUsageWidget does better than that on this Mac. It requests a refresh every 5 minutes and measured a median gap of 5 minutes 20 seconds, or 251–271 reloads a day, from macOS's widget scheduler logs of Oct 25 – Nov 1, 2026.
   - That is still far slower than 1–5 seconds. Whether a widget can refresh faster than every 5 minutes was not tested, because the refresh-rate requirement made the test unnecessary.
-- **Language / UI:** Swift and SwiftUI, using a single `Window` scene. Keep on Top uses `.windowLevel`, and the fixed sizes use `.windowResizability(.contentSize)`; both are in the macOS 27 SDK, and runtime switching will be confirmed in the first increments. AppKit is used for only three things, with no `NSWindow` hosting: observing `NSWindow.didChangeOcclusionStateNotification` for FR-17; `NSColorPanel` for FR-28, because SwiftUI's `ColorPicker` is a control inside a window and FR-26 keeps the window free of controls; and measuring group labels at launch for FR-3b, because the window's size has to be known before anything is drawn.
+- **Language / UI:** Swift and SwiftUI, using a single `Window` scene. The window's size limits come from its content, with `.windowResizability(.contentSize)`. Keep on Top sets the window's level directly (below), not through SwiftUI's `.windowLevel`.
+  - **Where SwiftUI falls short,** found in Increment 0.2 on Nov 4, 2026, with the macOS 27.2 SDK: `.windowLevel(.floating)` gives level 19 rather than AppKit's floating level, 3, and sets it again on every scene update, overriding a level set directly. With it, Keep on Top failed at launch. SwiftUI can position a window only when it opens, so it can't keep a resized window on screen. SwiftUI also has no way to limit drag resizing to set sizes.
+  - **AppKit is used for only four things,** with no `NSWindow` hosting:
+    - observing `NSWindow.didChangeOcclusionStateNotification` for FR-17;
+    - `NSColorPanel` for FR-28, because SwiftUI's `ColorPicker` is a control inside a window and FR-26 keeps the window free of controls;
+    - measuring group labels at launch for FR-3b, because the window's size has to be known before anything is drawn;
+    - reaching the one window SwiftUI creates, from inside its own view, to set its level (FR-2), keep it on screen after a size change (FR-22) and snap drag resizing to the three sizes (FR-3d). *(Added in v1.7, Chris's decision, Nov 4, 2026.)*
 - **Drawing:** SwiftUI `Canvas` first, as in DriveSpeed, and never Charts. If Canvas proves costly, Core Animation is the fallback.
 - **Project identity:** product name `CPUMeter`; bundle identifier `com.arc3solutions.CPUMeter`; Xcode project at `CPUMeter/CPUMeter.xcodeproj`; team `5JC55GTLZA`, automatic signing, App Sandbox and hardened runtime on.
 - **Minimum OS:** macOS 27.0. **Architecture:** Apple Silicon (`arm64`) only. **Toolchain:** Xcode 27.2, at `/Applications/Development/Xcode.app`.
@@ -192,6 +199,11 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
 17. **Height doesn't grow with core count** (FR-3a). A 36-core Mac gets a long, low window.
 18. **The fallback row is labeled "Cores %"** rather than having no label (FR-8c), so the percent marking appears on every Mac.
 19. **Three Macs get a wider window so the longer labels fit** (FR-3b), because each has a group of only two cores: the MacBook Neo at Small, and the M1 Pro and M1 Max at Small and Medium. No Mac you own changes.
+20. **A drag snaps when it ends, not during it** (FR-3d). Jumping between sizes mid-drag would mean taking over part of the window that SwiftUI uses itself. While dragging, the window passes through in-between sizes.
+21. **Full screen is off, and the green window button zooms** to Large and back. Because the window can now be dragged, the button is no longer gray. *(Replaces the UI design's §8.5.)*
+22. **macOS window tiling isn't supported.** Window → Fill, the tiling layouts, or dragging the window to a screen edge may resize it, and it then settles at the nearest of the three sizes.
+23. **"On screen" means the screen's visible area,** clear of the menu bar and Dock (FR-22).
+24. **The Edit menu stays,** although the window has no text to edit, because the color chooser's hex field needs Copy and Paste (FR-28).
 
 ## 9. Assumptions
 
@@ -202,4 +214,4 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
 
 ---
 
-*Next step: Increment 0.2 of `cpu-meter-build-plan.md`.*
+*Next step: finish Increment 0.2, then 0.3, of `cpu-meter-build-plan.md`.*

@@ -1,10 +1,11 @@
 # CPUMeter — Incremental Build Plan
 
-**Version:** 1.0
-**Date:** November 2, 2026
-**Companion to:** `cpu-meter-requirements.md` (v1.6) and `cpu-meter-ui-design.md`
+**Version:** 1.1
+**Changelog:** v1.1 (Nov 4, 2026) — Increment 0.2's first test found two places where SwiftUI falls short, so requirements v1.7 adds direct window access and 0.2 now uses it, through the new `WindowAccess.swift`. Added Increment 0.3, snap resizing, at Chris's request. It now completes Phase 0 and takes Phase 0's M1 pass. After 0.2's second test, the scene drops `.windowLevel`, and File's Close replaces macOS's own Close group. v1.0 (Nov 2, 2026) — approved by Chris.
+**Date:** November 4, 2026
+**Companion to:** `cpu-meter-requirements.md` (v1.7) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026; Increment 0.2 is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 has had two tests on the M4. The fixes from the second test pass Claude's checks and are waiting for Chris's third test, as its Result records. Then 0.3. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -72,7 +73,8 @@ The "Efficiency cores only" load is what proves the group labels are right. A ba
 | File | Purpose | First appears |
 |---|---|---|
 | `CPUMeter/CPUMeter.xcodeproj` | Project, made from DriveSpeed's | 0.1 |
-| `CPUMeterApp.swift` | `Window` scene, title, View menu, Keep on Top | 0.1 |
+| `CPUMeterApp.swift` | `Window` scene, title, menus, the size and Keep on Top settings | 0.1 |
+| `WindowAccess.swift` | The one place CPUMeter reaches its window: level, staying on screen, snapping | 0.2 |
 | `CoreCounters.swift` | Counter read and wrapping tick change | 1.1 |
 | `CoreTopology.swift` | Core groups, names and order; the fallback | 1.2 |
 | `CPUSampler.swift` | Timer, baseline, percentages, pause and resume | 1.3 |
@@ -89,7 +91,7 @@ The "Efficiency cores only" load is what proves the group labels are right. A ba
 
 ## Phase 0 — Project and window shell
 
-The window comes first because it holds the biggest unknowns. The requirements assume SwiftUI alone can switch sizes and window levels while running. If it can't, §6 of the requirements has to change, and it's better to learn that before anything is drawn in the window.
+The window comes first because it holds the biggest unknowns. The requirements assume SwiftUI alone can switch sizes and window levels while running. If it can't, §6 of the requirements has to change, and it's better to learn that before anything is drawn in the window. Increment 0.2 showed it can't in two places, so requirements v1.7 adds direct window access to §6.
 
 ### Increment 0.1 — Project and empty window
 - **Goal:** A buildable, correctly identified app with a title bar, a Dock icon, and closing that quits. (FR-1, FR-4, FR-5, FR-21, FR-23)
@@ -101,14 +103,49 @@ The window comes first because it holds the biggest unknowns. The requirements a
 ### Increment 0.2 — Sizes, Keep on Top and remembered position
 - **Goal:** Prove SwiftUI alone can do the window behavior the requirements assume. (FR-2, FR-3, FR-3a, FR-19, FR-20, FR-21, FR-22, FR-24, FR-25, FR-26)
 - **Build:** A placeholder sized to the base widths and fixed heights, with `.windowResizability(.contentSize)`. **View → Size** and **View → Keep on Top**, added to the existing View menu and stored with `@AppStorage`. `.windowLevel` follows the Keep on Top setting. Remove the menu items that don't apply to a one-window app.
-- **Risk:** If keeping the top-left corner in place or changing the window level needs direct `NSWindow` access, that contradicts §6 of the requirements. Claude stops and reports it, and Chris decides before anything is amended.
+  - *Added after the first test (Nov 4, 2026):* `WindowAccess.swift` reaches the window SwiftUI creates, under requirements v1.7. It sets the window's level directly and moves the window back on screen after a size change. File → Close is restored.
+  - *Changed after the second test (Nov 4, 2026):* the scene no longer uses `.windowLevel`, so `WindowAccess` alone sets the level. File's Close replaces macOS's own Close group, and no other File group is touched.
+- **Risk:** If keeping the top-left corner in place or changing the window level needs direct `NSWindow` access, that contradicts §6 of the requirements. Claude stops and reports it, and Chris decides before anything is amended. *Outcome:* the level and staying on screen both needed it, and Chris amended §6 (requirements v1.7).
 - **Verify:** Chris's checklist:
   - Each size switch changes the window and keeps its top-left corner in place.
   - Near the bottom-right of the screen, switching to Large keeps the window on screen.
   - With Keep on Top on, other apps' windows can't cover it. With it off, they can.
   - The zoom button is gray, and the window edges can't be dragged.
   - After quitting and relaunching, the size, position and Keep on Top state all return.
-  - The menu bar has no New Window, and nothing else that doesn't apply.
+  - The menu bar has no New Window, and nothing else that doesn't apply. File keeps Close.
+- **Done when:** The checklist passes on the M4. The M1 pass moves to 0.3, which now ends Phase 0.
+- **Result, first test (Nov 4, 2026):** Headless: Debug `clean build` → **`** BUILD SUCCEEDED **`** with no compiler warnings. Chris on the M4:
+  - Size switches keep the top-left corner in place. **Pass.**
+  - Near the bottom-right, switching to Large grows the window off screen. **Fail:** SwiftUI can position a window only when it opens.
+  - Keep on Top takes effect only after the window changes size. **Fail:** SwiftUI's `.windowLevel` doesn't hold the level. The cause was found after the second test, below.
+  - Enter Full Screen is disabled. **Pass.**
+  - Size, position and Keep on Top all return after a relaunch. **Pass.**
+  - New Window is gone, but the whole File menu went with it, Close included. **Fix:** restore Close.
+
+  Chris chose to amend §6 rather than work around either failure, and to add snap resizing as 0.3.
+- **Result, second test (Nov 4, 2026),** with `WindowAccess.swift` and File → Close. Headless: clean build, no compiler warnings. Chris on the M4:
+  - Near the bottom-right, switching to Large keeps the window on screen. **Pass.**
+  - Size switches keep the top-left corner, and a relaunch restores size, position and Keep on Top. **Pass.**
+  - Toggling Keep on Top now works both ways at once, but at launch the window isn't on top until it's toggled. **Fail:** something resets the level after `WindowAccess` sets it.
+  - File shows the restored Close (⌘W), then macOS's own Close and Close All, so Close appears twice. **Fix:** remove macOS's pair.
+- **Fixes after the second test (Nov 4, 2026), checked by Claude.** Clean build, no compiler warnings.
+  - *Keep on Top at launch.* The debugger showed SwiftUI's `.windowLevel(.floating)` sets level 19, macOS's utility level, rather than AppKit's floating level, 3. It does so when it creates the window and again on every scene update, overriding the 3 that `WindowAccess` sets at launch. A toggle comes after SwiftUI's update, which is why toggling worked. Level 19 still sat above other windows in Claude's runs, so the failure itself wasn't reproduced. The fix gives the launch the same level a toggle gives. **Fix:** the scene no longer uses `.windowLevel`. Checked: with a breakpoint on the level setter, `WindowAccess` is now the only thing that sets it. The window server reports level 3 from launch, through app switches and size changes, and 0 and then 3 when Keep on Top is turned off and on.
+  - *Close twice.* Close now replaces macOS's Close group (`.saveItem`), and the New group is left alone. Replacing any File group, even with nothing, adds a separator line, so the first try left a stray line under Close. Checked with the debugger: File holds only Close (⌘W), with no separator, and choosing it quits the app.
+  - Waiting for Chris's third test on the M4.
+
+### Increment 0.3 — Snap resizing
+- **Goal:** Dragging the window's edges settles it at one of the three sizes. (FR-3, FR-3d, FR-22) *(Added Nov 4, 2026, at Chris's request.)*
+- **Build:** The content's size limits become Small and Large, so the window can be dragged between them. `WindowAccess.swift` watches for the end of a drag, picks the nearest size by the rule in §2 of the design document, sets the window to it with the opposite edge or corner in place, and saves it as the chosen size. View → Size sets the window's frame the same way, keeping the top-left corner. `.windowFullScreenBehavior(.disabled)` turns off full screen, so the green button zooms.
+- **Risk:** SwiftUI and the snapping code could both try to set the window's size and fight. If they do, Claude stops and reports.
+- **Verify:** Chris's checklist:
+  - Dragging the bottom-right corner more than halfway toward the next size and letting go snaps to that size. Less than halfway, it returns.
+  - Dragging only the right edge, or only the bottom edge, reaches all three sizes.
+  - Dragging the left or top edge snaps with the opposite edge in place.
+  - The window can't be dragged smaller than Small or larger than Large.
+  - After a snap, View → Size has the new size checked, and the size returns after a relaunch.
+  - The green button zooms to Large and back, and full screen stays off.
+  - A snap near a screen edge leaves the window fully on screen.
+  - 0.2's checklist still passes.
 - **Done when:** The checklist passes on the M4 and in the M1 pass. **Completes Phase 0.**
 
 ---
@@ -171,7 +208,7 @@ The window comes first because it holds the biggest unknowns. The requirements a
 ### Increment 3.2 — Colors
 - **Goal:** Both colors can be changed with the system chooser. (FR-24, FR-28, FR-28a, FR-28b, FR-28c, FR-28d, FR-28e, NFR-5)
 - **Build:** `BarColors.swift` and **View → Colors**: User Color…, System Color… and Reset to Defaults. `NSColorPanel` opens set to the current color and titled with which one is changing, with its opacity control hidden. Chosen colors are stored as sRGB values. With none stored, the adaptive system colors apply.
-- **Risk:** With Keep on Top on, the chooser could open behind CPUMeter, or the app might not quit with the chooser open. Both are checked explicitly.
+- **Risk:** With Keep on Top on, the chooser could open behind CPUMeter, or the app might not quit with the chooser open. Both are checked explicitly. Also, File → Close (from 0.2) closes the meter's window by name, so ⌘W with the chooser in front may quit the app instead of closing the chooser. Check it here, and fix it if so.
 - **Verify:** Chris's checklist:
   - The bars and key change as a color is picked, between refreshes.
   - The chooser is reachable with Keep on Top on.
@@ -255,9 +292,10 @@ The window comes first because it holds the biggest unknowns. The requirements a
 |---|---|
 | FR-1 | 0.1 |
 | FR-2 | 0.2 |
-| FR-3, FR-3a | 0.2 |
+| FR-3, FR-3a | 0.2, 0.3 |
 | FR-3b | 2.1, 2.3 |
 | FR-3c | 2.1 |
+| FR-3d | 0.3 |
 | FR-4 | 0.1 |
 | FR-5 | 0.1, 5.1 |
 | FR-6 | 1.2, 2.2 |
@@ -276,7 +314,8 @@ The window comes first because it holds the biggest unknowns. The requirements a
 | FR-16 | 1.1 |
 | FR-17 | 4.1 |
 | FR-18, FR-18a–d | 3.1 |
-| FR-19, FR-20, FR-22 | 0.2 |
+| FR-19, FR-20 | 0.2 |
+| FR-22 | 0.2, 0.3 |
 | FR-21 | 0.1, 0.2 |
 | FR-23 | 0.1 |
 | FR-24 | 0.2, 3.1, 3.2 |

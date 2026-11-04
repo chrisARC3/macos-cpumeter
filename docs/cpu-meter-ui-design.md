@@ -2,8 +2,8 @@
 
 **Date:** November 2, 2026
 **Owner:** Chris
-**Status:** Approved by Chris on Nov 2, 2026, with the percent labels in §1 added at approval. Nothing on this page is built yet: Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and the meter itself arrives in Increment 2.2.
-**Requirements:** [cpu-meter-requirements.md](cpu-meter-requirements.md), v1.6. If the two disagree, the requirements win.
+**Status:** Approved by Chris on Nov 2, 2026, with the percent labels in §1 added at approval. Revised Nov 4, 2026, for requirements v1.7: dragging the window snaps to the three sizes (§2), File keeps Close (§5), and the green window button zooms (§8.5). Nothing on this page is built yet: Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and the meter itself arrives in Increment 2.2.
+**Requirements:** [cpu-meter-requirements.md](cpu-meter-requirements.md), v1.7. If the two disagree, the requirements win.
 **Design canvas:** https://claude.ai/artifact/UHY36UTxX5jYKkNp33nCYa (private to Chris). It holds the true-size mockups; this document holds the numbers the build uses.
 
 All dimensions are in points.
@@ -37,6 +37,18 @@ Height is fixed at each size. Width is the larger of the base width and the widt
 | **Bar height** | 74 | 134 | 195 |
 
 Bars share whatever width the window has, so they are wider than the minimum on Macs at a base width.
+
+### Resizing by dragging
+
+Requirements FR-3d. The window can be dragged to any size between Small and Large, and no smaller or larger. When the drag ends:
+
+1. **The dimension the drag changed more decides.** For width and for height, the change is measured as a share of that dimension's range from Small to Large. So dragging only the right edge, or only the bottom edge, can reach every size.
+2. **The window settles at the size nearest the dragged value** in that dimension. An exact tie goes to the larger size.
+3. **The edge or corner opposite the one dragged stays in place.** Then the on-screen rule in FR-22 applies.
+
+For example, on the M4, Small is 246 × 150 and Large is 480 × 300. Dragging the right edge of a Small window out to 380 changes the width by 57% of its range and the height by none, so width decides. 380 is nearest Medium's 360, so the window settles at Medium.
+
+During the drag, the meter stays at its current size, pinned to the window's top-left, and the rest of the window shows the plain window background.
 
 ### Text
 
@@ -92,6 +104,10 @@ Chosen bar colors replace the two defaults in both the bars and the key (FR-28).
 
 ## 5. Menus
 
+**File** contains only **Close** (⌘W). Closing the window quits the app (FR-23).
+
+**Edit, Window and Help** stay as macOS provides them. Edit stays for the color chooser's hex field, which needs Copy and Paste.
+
 **View** contains, in order:
 
 - **Size** ▸ Small, Medium, Large, with the current size checked
@@ -122,8 +138,10 @@ Measured on the M4 Mac mini with macOS 27, from real system text. Its display is
 2. **Per-core figures have no percent sign** (§1). There isn't room for one per bar, so the group labels carry it.
 3. **The zero state uses a dash** (§6), so "not measured yet" can't be mistaken for 0%.
 4. **The key always shows,** at every size and with default colors.
-5. **The zoom button is grayed out** because each size is fixed. This should follow from the fixed window size, and the first increment confirms it.
+5. **The green window button zooms to Large and back,** and full screen is off. *(Revised Nov 4, 2026. It was gray while the sizes were fixed. Dragging now snaps to the sizes, so the window counts as resizable.)*
 6. **The fallback row is labeled "Cores %"** (§6), so the percent marking appears on every Mac.
+7. **"Nearest" is judged by whichever dimension the drag changed more** (§2, Resizing by dragging), as a share of its range from Small to Large, so a drag along one edge always works.
+8. **During a drag, the meter keeps its current size** rather than stretching, because each size has its own fixed text and spacing.
 
 ## 9. To Confirm in the Real App
 
@@ -131,11 +149,12 @@ The canvas is a browser mockup, so these need checking in the real app, at the i
 
 - Text and bar edges on a scale 1.0 display, which is the M4 mini's and the harder case for small text.
 - That `Canvas` text matches the widths measured in §7. If it doesn't, the figures need another look at full load.
-- Switching size at runtime, including the top-left corner staying in place (FR-22).
+- Switching size at runtime, including the top-left corner staying in place (FR-22). The M4 confirmed this in Increment 0.2; staying on screen needed direct window access.
+- Snapping after a drag from each edge and corner, near screen edges, and with the green button (Increment 0.3).
 - The top row and title bar on the M3 MacBook Air's built-in display, during its one check near the end.
 
 Core counts other than 8 and 10 can only be checked with simulated data.
 
 ---
 
-*Next step: Increment 0.2 of `cpu-meter-build-plan.md`.*
+*Next step: finish Increment 0.2, then 0.3, of `cpu-meter-build-plan.md`.*
