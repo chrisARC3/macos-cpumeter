@@ -5,7 +5,7 @@
 **Date:** November 4, 2026
 **Companion to:** `cpu-meter-requirements.md` (v1.7) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 has had two tests on the M4. The fixes from the second test pass Claude's checks and are waiting for Chris's third test, as its Result records. Then 0.3. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3, snap resizing, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -131,7 +131,12 @@ The window comes first because it holds the biggest unknowns. The requirements a
 - **Fixes after the second test (Nov 4, 2026), checked by Claude.** Clean build, no compiler warnings.
   - *Keep on Top at launch.* The debugger showed SwiftUI's `.windowLevel(.floating)` sets level 19, macOS's utility level, rather than AppKit's floating level, 3. It does so when it creates the window and again on every scene update, overriding the 3 that `WindowAccess` sets at launch. A toggle comes after SwiftUI's update, which is why toggling worked. Level 19 still sat above other windows in Claude's runs, so the failure itself wasn't reproduced. The fix gives the launch the same level a toggle gives. **Fix:** the scene no longer uses `.windowLevel`. Checked: with a breakpoint on the level setter, `WindowAccess` is now the only thing that sets it. The window server reports level 3 from launch, through app switches and size changes, and 0 and then 3 when Keep on Top is turned off and on.
   - *Close twice.* Close now replaces macOS's Close group (`.saveItem`), and the New group is left alone. Replacing any File group, even with nothing, adds a separator line, so the first try left a stray line under Close. Checked with the debugger: File holds only Close (⌘W), with no separator, and choosing it quits the app.
-  - Waiting for Chris's third test on the M4.
+- **Result, third test (Nov 4, 2026).** Chris on the M4:
+  - Keep on Top holds from launch, and toggling works both ways. **Pass.**
+  - File holds only Close (⌘W), and closing quits the app. **Pass.**
+  - Size switches keep the top-left corner, Large near the bottom-right stays on screen, and a relaunch restores size, position and Keep on Top. **Pass.**
+
+  **Confirmed by Chris** (Nov 4, 2026).
 
 ### Increment 0.3 — Snap resizing
 - **Goal:** Dragging the window's edges settles it at one of the three sizes. (FR-3, FR-3d, FR-22) *(Added Nov 4, 2026, at Chris's request.)*
