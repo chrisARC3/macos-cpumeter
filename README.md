@@ -9,9 +9,9 @@ and computes the change each interval. It keeps no history and needs no elevated
 privileges.
 
 > **Status: in development. Not usable yet.** The
-> [requirements](docs/cpu-widget-requirements.md),
-> [UI design](docs/cpu-widget-ui-design.md) and
-> [build plan](docs/cpu-widget-build-plan.md) are approved.
+> [requirements](docs/cpu-meter-requirements.md),
+> [UI design](docs/cpu-meter-ui-design.md) and
+> [build plan](docs/cpu-meter-build-plan.md) are approved.
 
 ## Planned features
 

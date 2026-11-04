@@ -2,7 +2,7 @@
 
 **Version:** 1.0
 **Date:** November 2, 2026
-**Companion to:** `cpu-widget-requirements.md` (v1.5) and `cpu-widget-ui-design.md`
+**Companion to:** `cpu-meter-requirements.md` (v1.6) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
@@ -17,13 +17,13 @@ Each increment lists:
 - **Verify** — the observable check that it works.
 - **Done when** — the pass condition.
 
-Requirement IDs (FR-#, NFR-#) reference `cpu-widget-requirements.md`. Results are added to each increment as it completes, as in NetSpeed and DriveSpeed.
+Requirement IDs (FR-#, NFR-#) reference `cpu-meter-requirements.md`. Results are added to each increment as it completes, as in NetSpeed and DriveSpeed.
 
 **Division of labor.** Claude verifies logic headlessly with `swiftc` and `xcodebuild` and reports. Chris runs the GUI and confirms. Any command handed to Chris uses absolute paths and can be pasted as is.
 
 **Test machines.** The M4 is the primary test machine, and every increment is confirmed there. *(Chris's instruction, Nov 2, 2026.)*
 
-**The M1 pass.** The M1 mini is tested when a check needs it: at the end of each phase, and in 1.2 and 1.3, where its equal core counts are the point of the test. When a build is needed there, Claude copies it automatically to the M1's Drop Box, through the Public folder Chris keeps mounted on the M4, and tells Chris its name. Chris then runs it on the M1. If the folder isn't mounted, Claude says so and doesn't copy it anywhere else. The build is a zip named with its increment and commit, such as `CPUMeter-1.2-5d90544.zip`, so builds never overwrite each other. It isn't notarized, so macOS may ask for Open Anyway in System Settings → Privacy & Security the first time. This route hasn't been tried yet; 1.2 is its first use.
+**The M1 pass.** The M1 mini is tested when a check needs it: at the end of each phase, and in 1.2 and 1.3, where its equal core counts are the point of the test. When a build is needed there, Claude copies it automatically to the M1's Drop Box, through the Public folder Chris keeps mounted on the M4, and tells Chris its name. Chris then runs it on the M1. If the folder isn't mounted, Claude says so and doesn't copy it anywhere else. The build is a zip named with its increment and commit, such as `CPUMeter-1.2-5d90544.zip`, so builds never overwrite each other. It isn't notarized, so macOS may ask for Open Anyway in System Settings → Privacy & Security the first time. This route hasn't been tried yet; the end of Phase 0 is its first use.
 
 **Commits.** One commit per confirmed increment, named "Increment N.N — …", and every commit is pushed right away. *(Chris's instruction, Nov 2, 2026.)*
 
@@ -290,8 +290,8 @@ The window comes first because it holds the biggest unknowns. The requirements a
 
 ## Prerequisites before Increment 0.1
 
-- [x] Requirements approved (`cpu-widget-requirements.md`).
-- [x] UI design approved (`cpu-widget-ui-design.md`).
+- [x] Requirements approved (`cpu-meter-requirements.md`).
+- [x] UI design approved (`cpu-meter-ui-design.md`).
 - [x] Counter source and core-type lookup proven on the M4 under the App Sandbox.
 - [x] Test loads and headless rendering proven on the M4.
 - [x] Public repo created.

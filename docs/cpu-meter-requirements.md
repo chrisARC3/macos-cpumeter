@@ -1,10 +1,10 @@
 # CPUMeter — Requirements
 
-**Version:** 1.5
-**Changelog:** v1.5 (Nov 2, 2026) — the M4 is now the primary test machine, and the M1 is tested when a check needs it. The app icon is Chris's to create. Both are Chris's instructions when approving the build plan. v1.4 (Nov 2, 2026) — §6 now lists a third small use of AppKit: measuring group labels for FR-3b. Found while writing the build plan. v1.3 (Nov 2, 2026) — added **FR-8d**: each group label ends in " %", so it is clear the per-core figures are percentages. Chris's request when approving the UI design. FR-8c's single row now has a label too, FR-3b makes room for the longer labels, and FR-11 and §§6 and 8 are updated to match. v1.2 (Nov 2, 2026) — revised **FR-3** and **FR-11** to support up to 36 cores, the current Mac maximum. Height stays fixed at each size and width fits the Mac's core count, so per-core figures now appear at every size on every Mac. Chris's request and choice during the UI design stage. Also updated NFR-4 and §§6, 8 and 9 to match, and FR-27 records Chris's top-row choice. v1.1 (Nov 2, 2026) — added **FR-28**: the bar colors default to blue and orange and can be changed with the macOS system color chooser, opened from View → Colors. Chris's request during the UI design stage. Also updated FR-9, FR-24, NFR-5 and §§6–8 to match. v1.0 (Nov 2, 2026) — approved by Chris with no changes to the v0.1 draft, including the §8 decisions. v0.1 (Nov 2, 2026) — initial draft, from Chris's project brief and the question-by-question review of Nov 1–2, 2026.
+**Version:** 1.6
+**Changelog:** v1.6 (Nov 2, 2026) — the project folder and these documents now say "meter" rather than "widget", at Chris's request, because the product is a meter. They were `CPU-widget` and `cpu-widget-*.md`. No requirement changed. v1.5 (Nov 2, 2026) — the M4 is now the primary test machine, and the M1 is tested when a check needs it. The app icon is Chris's to create. Both are Chris's instructions when approving the build plan. v1.4 (Nov 2, 2026) — §6 now lists a third small use of AppKit: measuring group labels for FR-3b. Found while writing the build plan. v1.3 (Nov 2, 2026) — added **FR-8d**: each group label ends in " %", so it is clear the per-core figures are percentages. Chris's request when approving the UI design. FR-8c's single row now has a label too, FR-3b makes room for the longer labels, and FR-11 and §§6 and 8 are updated to match. v1.2 (Nov 2, 2026) — revised **FR-3** and **FR-11** to support up to 36 cores, the current Mac maximum. Height stays fixed at each size and width fits the Mac's core count, so per-core figures now appear at every size on every Mac. Chris's request and choice during the UI design stage. Also updated NFR-4 and §§6, 8 and 9 to match, and FR-27 records Chris's top-row choice. v1.1 (Nov 2, 2026) — added **FR-28**: the bar colors default to blue and orange and can be changed with the macOS system color chooser, opened from View → Colors. Chris's request during the UI design stage. Also updated FR-9, FR-24, NFR-5 and §§6–8 to match. v1.0 (Nov 2, 2026) — approved by Chris with no changes to the v0.1 draft, including the §8 decisions. v0.1 (Nov 2, 2026) — initial draft, from Chris's project brief and the question-by-question review of Nov 1–2, 2026.
 **Date:** November 2, 2026
 **Owner:** Chris
-**Status:** **v1.0 approved by Chris, Nov 2, 2026; v1.1 adds Chris's color request; v1.2 adds Chris's 36-core sizing; v1.3 adds Chris's percent labels.** Nothing is built yet. The UI design in `cpu-widget-ui-design.md` was approved by Chris on Nov 2, 2026.
+**Status:** **v1.0 approved by Chris, Nov 2, 2026; v1.1 adds Chris's color request; v1.2 adds Chris's 36-core sizing; v1.3 adds Chris's percent labels.** Nothing is built yet. The UI design in `cpu-meter-ui-design.md` was approved by Chris on Nov 2, 2026.
 **Lineage:** Sibling to NetSpeed and DriveSpeed. It carries over their window behavior, persistence, project layout and refresh choices. The differences are live bars instead of a rolling graph, three fixed window sizes, menus in the Mac menu bar, a Keep on Top option, and bar colors the user can change.
 
 ---
@@ -90,7 +90,7 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
 - FR-24: **View** holds Size, Refresh Rate, Colors and Keep on Top, with the current size, rate and Keep on Top state checked.
 - FR-25: Menu items that don't apply to a one-window app, such as New Window, are removed.
 - FR-26: **All controls are in the Mac menu bar.** The window contains only the display, so all of its space is available for bars and figures.
-- FR-27: Layout is a **top row with the overall figure on the left and the color key on the right**, then group labels, bars and per-core figures. *(Chris's choice, Nov 2, 2026.)* `cpu-widget-ui-design.md` sets the details.
+- FR-27: Layout is a **top row with the overall figure on the left and the color key on the right**, then group labels, bars and per-core figures. *(Chris's choice, Nov 2, 2026.)* `cpu-meter-ui-design.md` sets the details.
 
 ### 4.7 Colors
 - FR-28: **The user and system bar colors can each be changed** with the **macOS system color chooser**. *(Chris's request, Nov 2, 2026.)*
@@ -159,7 +159,7 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
 | 15-inch M3 MacBook Air | 8 (4 Performance, 4 Efficiency) | One check near the end: energy use on battery, and the window on a built-in display with a notch | Apple's specs; confirm on the machine |
 
   **Simulated only:** core counts other than 8 and 10, meaning 6 cores and everything from 11 to 36, and core-type names other than Performance and Efficiency. The README and release notes must state what was and wasn't tested.
-- **Repository:** follows NetSpeed and DriveSpeed. Public repo `chrisARC3/macos-cpumeter` on `main`, MIT license © 2026 ARC3 Solutions, `docs/cpu-widget-requirements.md`, `docs/cpu-widget-ui-design.md` and `docs/cpu-widget-build-plan.md`, and a gitignored `NEXT-SESSION-HANDOFF.md`. The app icon is Chris's to create, separately. The README's "Note From The Human" section is Chris's to write. The repo was created on Nov 2, 2026.
+- **Repository:** follows NetSpeed and DriveSpeed. Public repo `chrisARC3/macos-cpumeter` on `main`, MIT license © 2026 ARC3 Solutions, `docs/cpu-meter-requirements.md`, `docs/cpu-meter-ui-design.md` and `docs/cpu-meter-build-plan.md`, and a gitignored `NEXT-SESSION-HANDOFF.md`. The app icon is Chris's to create, separately. The README's "Note From The Human" section is Chris's to write. The repo was created on Nov 2, 2026.
 
 ## 7. Deferred / Future Considerations
 
@@ -202,4 +202,4 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
 
 ---
 
-*Next step: Increment 0.1 of `cpu-widget-build-plan.md`.*
+*Next step: Increment 0.1 of `cpu-meter-build-plan.md`.*
