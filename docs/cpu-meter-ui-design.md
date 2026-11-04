@@ -2,7 +2,7 @@
 
 **Date:** November 2, 2026
 **Owner:** Chris
-**Status:** Approved by Chris on Nov 2, 2026, with the percent labels in §1 added at approval. Revised Nov 4, 2026, for requirements v1.7: dragging the window snaps to the three sizes (§2), File keeps Close (§5), and the green window button zooms (§8.5). Nothing on this page is built yet: Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and the meter itself arrives in Increment 2.2.
+**Status:** Approved by Chris on Nov 2, 2026, with the percent labels in §1 added at approval. Revised Nov 4, 2026, for requirements v1.7: dragging the window snaps to the three sizes (§2), File keeps Close (§5), and the green window button zooms (§8.5). The window behavior is built: by Nov 4, 2026, Phase 0 had been confirmed by Chris, including the three sizes, Keep on Top, snap resizing and the menus in §5. The meter itself arrives in Increment 2.2.
 **Requirements:** [cpu-meter-requirements.md](cpu-meter-requirements.md), v1.7. If the two disagree, the requirements win.
 **Design canvas:** https://claude.ai/artifact/UHY36UTxX5jYKkNp33nCYa (private to Chris). It holds the true-size mockups; this document holds the numbers the build uses.
 
@@ -150,11 +150,11 @@ The canvas is a browser mockup, so these need checking in the real app, at the i
 - Text and bar edges on a scale 1.0 display, which is the M4 mini's and the harder case for small text.
 - That `Canvas` text matches the widths measured in §7. If it doesn't, the figures need another look at full load.
 - Switching size at runtime, including the top-left corner staying in place (FR-22). The M4 confirmed this in Increment 0.2; staying on screen needed direct window access.
-- Snapping after a drag from each edge and corner, near screen edges, and with the green button (Increment 0.3).
+- Snapping after a drag from each edge and corner, near screen edges, and with the green button. Confirmed by Chris on the M4 and the M1 in Increment 0.3.
 - The top row and title bar on the M3 MacBook Air's built-in display, during its one check near the end.
 
 Core counts other than 8 and 10 can only be checked with simulated data.
 
 ---
 
-*Next step: finish Increment 0.2, then 0.3, of `cpu-meter-build-plan.md`.*
+*Next step: Increment 1.2, core types, of `cpu-meter-build-plan.md`. The meter's layout from this page is built in Phase 2.*
