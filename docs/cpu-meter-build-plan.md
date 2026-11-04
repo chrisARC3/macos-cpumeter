@@ -5,7 +5,7 @@
 **Date:** November 4, 2026
 **Companion to:** `cpu-meter-requirements.md` (v1.7) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3, snap resizing, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1, reading the counters, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -75,6 +75,7 @@ The "Efficiency cores only" load is what proves the group labels are right. A ba
 | `CPUMeter/CPUMeter.xcodeproj` | Project, made from DriveSpeed's | 0.1 |
 | `CPUMeterApp.swift` | `Window` scene, title, menus, the size and Keep on Top settings | 0.1 |
 | `WindowAccess.swift` | The one place CPUMeter reaches its window: level, staying on screen, snapping | 0.2 |
+| `MeterSize.swift` | The three sizes and the snap rule, testable on their own | 0.3 |
 | `CoreCounters.swift` | Counter read and wrapping tick change | 1.1 |
 | `CoreTopology.swift` | Core groups, names and order; the fallback | 1.2 |
 | `CPUSampler.swift` | Timer, baseline, percentages, pause and resume | 1.3 |
@@ -152,6 +153,18 @@ The window comes first because it holds the biggest unknowns. The requirements a
   - A snap near a screen edge leaves the window fully on screen.
   - 0.2's checklist still passes.
 - **Done when:** The checklist passes on the M4 and in the M1 pass. **Completes Phase 0.**
+- **Result, Claude's checks (Nov 4, 2026):** `MeterSize` and the snap rule moved to the new `MeterSize.swift`. `.windowFullScreenBehavior` turned out to be a view modifier, so it sits on the window's content. Debug and Release clean builds, no compiler warnings.
+  - The snap rule, compiled alone with a test driver, passes 19 cases. They include design §2's M4 example, an exact tie going to the larger size, edge-only drags reaching all three sizes, corner drags, and equal shares.
+  - In the running app, through the debugger, with a drag's end simulated by the live-resize notifications:
+    - right-edge, left-edge, bottom-left-corner and top-edge drags each settle at the expected size, with the opposite edge or corner in place, and the saved size follows;
+    - a resize that isn't a drag settles with the top-left in place;
+    - the green button zooms to Large and back, and full screen is off;
+    - View → Size keeps the top-left corner, and near the bottom-right both a switch to Large and a snap stay on screen;
+    - relaunching with a saved size that doesn't match the saved frame opens at the saved size with the top-left in place. The open animation shows the old size for about 4 ms first.
+    - The level is still 3 from launch, and File still holds only Close.
+  - Not covered by Claude's checks: a real mouse drag.
+  - Copied to the M1's Drop Box as `CPUMeter-0.3-95283b6-dirty.zip`.
+- **Result, Chris's test (Nov 4, 2026):** all eight checks pass on the M4 (run from Xcode) and on the M1 (the Drop Box build), including 0.2's checklist. **Confirmed by Chris** (Nov 4, 2026). **Phase 0 is complete.**
 
 ---
 
