@@ -2,7 +2,7 @@
 
 **Date:** November 2, 2026
 **Owner:** Chris
-**Status:** Approved by Chris on Nov 2, 2026, with the percent labels in §1 added at approval. Nothing is built yet.
+**Status:** Approved by Chris on Nov 2, 2026, with the percent labels in §1 added at approval. Nothing on this page is built yet: Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and the meter itself arrives in Increment 2.2.
 **Requirements:** [cpu-meter-requirements.md](cpu-meter-requirements.md), v1.6. If the two disagree, the requirements win.
 **Design canvas:** https://claude.ai/artifact/UHY36UTxX5jYKkNp33nCYa (private to Chris). It holds the true-size mockups; this document holds the numbers the build uses.
 
@@ -138,4 +138,4 @@ Core counts other than 8 and 10 can only be checked with simulated data.
 
 ---
 
-*Next step: Increment 0.1 of `cpu-meter-build-plan.md`.*
+*Next step: Increment 0.2 of `cpu-meter-build-plan.md`.*

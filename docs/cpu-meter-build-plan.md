@@ -4,6 +4,7 @@
 **Date:** November 2, 2026
 **Companion to:** `cpu-meter-requirements.md` (v1.6) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026; Increment 0.2 is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---

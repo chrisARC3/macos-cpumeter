@@ -4,7 +4,7 @@
 **Changelog:** v1.6 (Nov 2, 2026) — the project folder and these documents now say "meter" rather than "widget", at Chris's request, because the product is a meter. They were `CPU-widget` and `cpu-widget-*.md`. No requirement changed. v1.5 (Nov 2, 2026) — the M4 is now the primary test machine, and the M1 is tested when a check needs it. The app icon is Chris's to create. Both are Chris's instructions when approving the build plan. v1.4 (Nov 2, 2026) — §6 now lists a third small use of AppKit: measuring group labels for FR-3b. Found while writing the build plan. v1.3 (Nov 2, 2026) — added **FR-8d**: each group label ends in " %", so it is clear the per-core figures are percentages. Chris's request when approving the UI design. FR-8c's single row now has a label too, FR-3b makes room for the longer labels, and FR-11 and §§6 and 8 are updated to match. v1.2 (Nov 2, 2026) — revised **FR-3** and **FR-11** to support up to 36 cores, the current Mac maximum. Height stays fixed at each size and width fits the Mac's core count, so per-core figures now appear at every size on every Mac. Chris's request and choice during the UI design stage. Also updated NFR-4 and §§6, 8 and 9 to match, and FR-27 records Chris's top-row choice. v1.1 (Nov 2, 2026) — added **FR-28**: the bar colors default to blue and orange and can be changed with the macOS system color chooser, opened from View → Colors. Chris's request during the UI design stage. Also updated FR-9, FR-24, NFR-5 and §§6–8 to match. v1.0 (Nov 2, 2026) — approved by Chris with no changes to the v0.1 draft, including the §8 decisions. v0.1 (Nov 2, 2026) — initial draft, from Chris's project brief and the question-by-question review of Nov 1–2, 2026.
 **Date:** November 2, 2026
 **Owner:** Chris
-**Status:** **v1.0 approved by Chris, Nov 2, 2026; v1.1 adds Chris's color request; v1.2 adds Chris's 36-core sizing; v1.3 adds Chris's percent labels.** Nothing is built yet. The UI design in `cpu-meter-ui-design.md` was approved by Chris on Nov 2, 2026.
+**Status:** **v1.0 approved by Chris, Nov 2, 2026; v1.1 adds Chris's color request; v1.2 adds Chris's 36-core sizing; v1.3 adds Chris's percent labels.** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026; Increment 0.2 is next. The UI design in `cpu-meter-ui-design.md` was approved by Chris on Nov 2, 2026.
 **Lineage:** Sibling to NetSpeed and DriveSpeed. It carries over their window behavior, persistence, project layout and refresh choices. The differences are live bars instead of a rolling graph, three fixed window sizes, menus in the Mac menu bar, a Keep on Top option, and bar colors the user can change.
 
 ---
@@ -202,4 +202,4 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
 
 ---
 
-*Next step: Increment 0.1 of `cpu-meter-build-plan.md`.*
+*Next step: Increment 0.2 of `cpu-meter-build-plan.md`.*
