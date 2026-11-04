@@ -5,7 +5,7 @@
 **Date:** November 4, 2026
 **Companion to:** `cpu-meter-requirements.md` (v1.7) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3, sample on a timer, is next, and completes Phase 1. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1, layout math, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -61,7 +61,8 @@ The "Efficiency cores only" load is what proves the group labels are right. A ba
 ## Already proven
 
 - **Counter read:** `host_processor_info` works from a signed, sandboxed `.app` with no entitlement exceptions, at 3.4–3.7 µs per call, on the M4 (Nov 1).
-- **Core-type lookup:** IORegistry and `sysctl` both work in the sandbox on the M4, where the logical IDs and performance levels run in opposite directions (Nov 1). The M1 numbers them the same way, and the rule groups both Macs correctly (Increment 1.2, Nov 4).
+- **Core-type lookup:** IORegistry and `sysctl` both work in the sandbox on the M4, where the logical IDs and performance levels run in opposite directions (Nov 1). The M1 numbers them the same way, and the rule groups both Macs correctly (Increment 1.2, Nov 4). Under the Efficiency-only load, only the group labeled "Efficiency %" rises on either Mac, and four busy loops raise only "Performance %" on the M1 (Increment 1.3, Nov 4).
+- **Sampling:** a 1-second timer in the common run-loop modes keeps updating while a menu is open, and the figures follow every test load on both Mac minis (Increment 1.3, Nov 4).
 - **Headless rendering:** SwiftUI's `Canvas` draws to a PNG through `ImageRenderer` from a plain command-line driver, at scale 1.0 and with real text (Nov 2). So Claude can inspect real layouts before Chris sees them.
 - **Figure spacing in `Canvas`:** "100" at 21, 23 and 25 pt per core reads as separate numbers there too (Nov 2).
 - **Rounding in `Canvas`:** at scale 1.0 it reports text widths rounded up to whole points: "Performance %" measures 77, 83 and 90 against AppKit's 76.1, 82.9 and 89.5. The width rule uses AppKit's figures, because it has to run before anything is drawn. 2.1 confirms the difference doesn't show.
@@ -210,6 +211,42 @@ The window comes first because it holds the biggest unknowns. The requirements a
 - **Build:** `CPUSampler.swift`, an `@Observable`, main-actor class like DriveSpeed's `SpeedSampler`: the baseline is primed in `start()`, and the timer tolerance is 10% of the interval. The timer runs in the run loop's common modes, unlike DriveSpeed's, so the bars keep updating while a menu is open. That matters here because every control is in the menu bar. Each tick computes user and system percentages per core and the overall figure from raw ticks, all from one read. A temporary console line prints the overall figure and each group's average. It replaces 1.1's temporary launch print.
 - **Verify:** Headless checks for the percentage math, the zero-tick case and the overall figure. Then each test load, compared with the table above and with Activity Monitor by trend. The "Efficiency cores only" load must raise only the Efficiency group, on both the M4 and the M1.
 - **Done when:** Figures follow every load, and the labels are proven right on both Macs. **Completes Phase 1.**
+- **Result, Claude's checks (Nov 4, 2026):** `CPUSampler.swift` has `CPUUsage` (user and system shares), `CPUSample` (every core plus the overall figure, from one read) and `CPUSampler`.
+  - The sampler reads the core groups when it's made, so 2.1 can size the window before it opens. `start()` reads the baseline, then runs a 1-second timer with a 0.1-second tolerance in the run loop's common modes.
+  - `usage(of:)` sums raw ticks over one core, a group or every core. A core with no ticks gives no figure, which 2.2 draws as the dash. A failed read keeps the baseline, and a changed core count starts a new one; 4.2 tests both.
+  - `CPUMeterApp.swift` owns the sampler and starts it when the window appears. The 1.1 and 1.2 launch prints are gone. The temporary console line prints in every build, so it shows in Xcode's console, which runs Release. 2.2 removes it.
+  - Compiled alone with a test driver under Swift 6 and the project's main-actor default, with no warnings. 26 checks pass:
+    - math: user and system shares, nice counted as user, a wrapped counter, full load and idle, a zero-tick core giving no figure and left out of the overall, every core at zero and no cores giving no overall, the overall from raw ticks (0.45% where averaging rounded figures gives 1%), each core weighted by its own ticks, group averages, and mismatched core counts;
+    - live: the groups at launch, nothing published before the first tick, 5 ticks in 5.5 s, 1.000 s apart after the first, and none after `stop()`;
+    - menus: with AppKit loaded and the run loop in event-tracking mode, the mode macOS uses while a menu is open, the sampler ticked 3 times in 3.5 s, while a control timer in the default mode only never fired;
+    - 100,000 live reads through the math, with the memory footprint flat at 1,904 KB.
+  - Debug and Release clean builds, with no compiler warnings. The Release binary now has the sampler and the topology code, and none of the 1.1 and 1.2 prints.
+  - The Release app on the M4, under each test load, as the median of 7 or 8 ticks after the first, with the table above for comparison:
+
+    | Load | Efficiency | Performance | Overall | User / system |
+    |---|---|---|---|---|
+    | None | 14.2% (11.8) | 0.4% (4.6) | 9.2% (8.9) | — |
+    | User time | 5.4% (7.5) | 26.5% (26.8) | 13.9% (15.2) | 12.3% / 1.6% (13.1 / 2.2) |
+    | System time | 10.4% (7.3) | 26.8% (26.2) | 19.9% (14.9) | 7.2% / 10.9% (3.7 / 11.2) |
+    | Efficiency cores only | 27.9% (31.4) | **0.0%** (2.1) | 16.9% (19.7) | 5.3% / 11.6% (7.1 / 12.6) |
+    | Four busy loops | 5.5% (10.9) | 100% (99.8) | 43.3% (46.5) | 41.8% / 1.4% (43.7 / 2.8) |
+    | Every core | 100% (99.9) | 100% (100) | 100% (99.9) | 98.6% / 1.4% (97.8 / 2.1) |
+
+    Every load moves the figures as the table does. Under the Efficiency-only load, Performance never rose above 0.5%, so the M4's labels are right. The system-time run's overall figure is higher than the table's because other user work was running in its first two ticks; its system share and Performance figure match. Under the every-core load the app's own timer fired late, with 84 to 156 ticks per core between updates and one 2-second gap, and every figure still read 100.0, because each comes from the ticks rather than clock time (FR-15).
+  - Copied to the M1's Drop Box as `CPUMeter-1.3-0684c30-dirty.zip`, a Release build.
+  - Not covered by Claude's checks: a menu held open in the running app, and Activity Monitor alongside.
+- **Result, Chris's test (Nov 4, 2026):**
+  - On the M4, run from Xcode: the figures follow the test loads and Activity Monitor, the console lines keep coming while the View menu is held open, and the Efficiency-only load raises only the Efficiency group. **Pass.**
+  - On the M1, the Drop Box build, run from Terminal with one pasted command: about 100 ticks per core between updates throughout, and macOS's harmless `sandbox_extension_issue_file_to_process` line from 1.2. As the median of the ticks after the first:
+
+    | Load | Efficiency | Performance | Overall | User / system |
+    |---|---|---|---|---|
+    | Efficiency cores only (10 ticks) | 33.4% | **0.3%** | 16.9% | 3.0% / 13.7% |
+    | Four busy loops (9 ticks) | 2.8% | **100%** | 51.5% | 50.6% / 1.0% |
+
+    Each load raises only the group it should. Performance reached 10.8% in one tick of the Efficiency-only load and stayed under 2% in the rest. **So the M1's labels are right in both directions**, which the tied counts in 1.2 couldn't show. Four busy loops on 8 cores give 51.5% overall, close to the 4 / 8 that NFR-6 expects. **Pass.**
+
+  **Confirmed by Chris** (Nov 4, 2026). **Phase 1 is complete.**
 
 ---
 

@@ -157,4 +157,4 @@ Core counts other than 8 and 10 can only be checked with simulated data.
 
 ---
 
-*Next step: Increment 1.3, sample on a timer, of `cpu-meter-build-plan.md`. The meter's layout from this page is built in Phase 2.*
+*Next step: Increment 2.1, layout math, of `cpu-meter-build-plan.md`, which turns §2's numbers into the window size and each bar's position. The meter itself is drawn in 2.2.*
