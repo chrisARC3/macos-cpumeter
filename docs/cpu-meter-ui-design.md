@@ -157,4 +157,4 @@ Core counts other than 8 and 10 can only be checked with simulated data.
 
 ---
 
-*Next step: Increment 1.2, core types, of `cpu-meter-build-plan.md`. The meter's layout from this page is built in Phase 2.*
+*Next step: Increment 1.3, sample on a timer, of `cpu-meter-build-plan.md`. The meter's layout from this page is built in Phase 2.*

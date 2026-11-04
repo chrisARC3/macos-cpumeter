@@ -33,9 +33,10 @@ struct CPUMeterApp: App {
     @Environment(\.dismissWindow) private var dismissWindow
 
     #if DEBUG
-    /// TEMPORARY (Increment 1.1, removed in 1.3): shows that the sandboxed app
-    /// reads the counters. Prints each core's raw total at launch, then each
-    /// core's tick change over the next second.
+    /// TEMPORARY (Increments 1.1 and 1.2, removed in 1.3): shows that the
+    /// sandboxed app reads the counters and the core types. Prints each core's
+    /// raw total and the core groups at launch, then each core's tick change
+    /// over the next second.
     init() {
         guard let first = CoreCounters.read() else {
             print("CPUMeter 1.1 check: counter read failed")
@@ -45,6 +46,7 @@ struct CPUMeterApp: App {
         let totals = first.map { String(UInt64($0.user) + UInt64($0.system) + UInt64($0.idle) + UInt64($0.nice)) }
         print(String(format: "CPUMeter 1.1 check: %d cores, t=%.3f raw totals: ", first.count,
                      start.timeIntervalSince1970) + totals.joined(separator: " "))
+        Self.printCoreGroups(coreCount: first.count)
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             guard let second = CoreCounters.read(),
                   let changes = CoreCounters.changes(from: first, to: second) else {
@@ -55,6 +57,30 @@ struct CPUMeterApp: App {
             print(String(format: "CPUMeter 1.1 check: change over %.2f s, user/system/idle: ",
                          Date().timeIntervalSince(start)) + perCore.joined(separator: "  "))
         }
+    }
+
+    /// TEMPORARY (Increment 1.2, removed in 1.3): prints the core groups, such
+    /// as "Efficiency % 0–5 | Performance % 6–9", then the raw inputs they
+    /// came from, so an unexpected result can be diagnosed from one paste.
+    private static func printCoreGroups(coreCount: Int) {
+        let inputs = CoreTopology.readInputs()
+        let topology = CoreTopology.resolve(inputs, coreCount: coreCount)
+        let groups = topology.groups.map { group in
+            guard let first = group.cores.first, let last = group.cores.last else { return "\(group.label) none" }
+            return first == last ? "\(group.label) \(first)" : "\(group.label) \(first)–\(last)"
+        }
+        let fallback = topology.fallbackReason.map { "  (fallback: \($0))" } ?? ""
+        print("CPUMeter 1.2 check: " + groups.joined(separator: " | ") + fallback)
+
+        let levels = inputs.levels.map { levels in
+            levels.enumerated().map { "perflevel\($0.offset) \($0.element.name) ×\($0.element.coreCount)" }
+                .joined(separator: ", ")
+        } ?? "unreadable"
+        let cores = inputs.cores.map { cores in
+            cores.sorted { $0.id < $1.id }.map { "\($0.id):\($0.clusterType.isEmpty ? "?" : $0.clusterType)" }
+                .joined(separator: " ")
+        } ?? "unreadable"
+        print("CPUMeter 1.2 inputs: \(coreCount) cores counted; sysctl: \(levels); IORegistry: \(cores)")
     }
     #endif
 

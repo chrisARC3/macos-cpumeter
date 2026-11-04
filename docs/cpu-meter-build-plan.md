@@ -5,7 +5,7 @@
 **Date:** November 4, 2026
 **Companion to:** `cpu-meter-requirements.md` (v1.7) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2, core types, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3, sample on a timer, is next, and completes Phase 1. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -61,7 +61,7 @@ The "Efficiency cores only" load is what proves the group labels are right. A ba
 ## Already proven
 
 - **Counter read:** `host_processor_info` works from a signed, sandboxed `.app` with no entitlement exceptions, at 3.4–3.7 µs per call, on the M4 (Nov 1).
-- **Core-type lookup:** IORegistry and `sysctl` both work in the sandbox on the M4, where the logical IDs and performance levels run in opposite directions (Nov 1). **Not yet run on the M1.**
+- **Core-type lookup:** IORegistry and `sysctl` both work in the sandbox on the M4, where the logical IDs and performance levels run in opposite directions (Nov 1). The M1 numbers them the same way, and the rule groups both Macs correctly (Increment 1.2, Nov 4).
 - **Headless rendering:** SwiftUI's `Canvas` draws to a PNG through `ImageRenderer` from a plain command-line driver, at scale 1.0 and with real text (Nov 2). So Claude can inspect real layouts before Chris sees them.
 - **Figure spacing in `Canvas`:** "100" at 21, 23 and 25 pt per core reads as separate numbers there too (Nov 2).
 - **Rounding in `Canvas`:** at scale 1.0 it reports text widths rounded up to whole points: "Performance %" measures 77, 83 and 90 against AppKit's 76.1, 82.9 and 89.5. The width rule uses AppKit's figures, because it has to run before anything is drawn. 2.1 confirms the difference doesn't show.
@@ -189,10 +189,21 @@ The window comes first because it holds the biggest unknowns. The requirements a
 - **Goal:** Correct groups, names and order, on both Macs. **This is the first real test of the core-type rule on the M1.** (FR-6, FR-8, FR-8a, FR-8b, FR-8c)
 - **Build:** `CoreTopology.swift`: the rule from §6 of the requirements, separated from its inputs so it can be tested with fixtures. It takes the logical IDs and cluster types from IORegistry and the names and counts from `sysctl`, and returns groups ordered from lowest to highest performance, each with its bars in logical-ID order. A temporary launch print shows the result.
 - **Verify:**
-  - Headless fixtures: the M4's 6 + 4, the M1's tied 4 + 4, the M5 Max's Performance and Super, and mismatched counts, which must fall back to one "Cores" group.
+  - Headless fixtures: the M4's 6 + 4, the M1's tied 4 + 4, the M5 Max's Performance and Super, and mismatched counts, which must fall back to one "Cores %" group.
   - Live on the M4: Efficiency logical IDs 0–5, then Performance 6–9.
   - Live on the M1: Claude copies the build to the Drop Box, and Chris runs one pasted command and sends back the output.
 - **Done when:** Fixtures pass and both Macs report the right groups. If the M1 reports something unexpected, the rule gets fixed here, before anything depends on it.
+- **Result, Claude's checks (Nov 4, 2026):** `CoreTopology.swift` has `CoreGroup`, which holds macOS's name, the " %" label and the logical IDs, and `CoreTopology`. Its `resolve` applies the rule to inputs passed in, and `readInputs` reads them from IORegistry and `sysctl`. A fallback carries its reason, which the launch print shows. The temporary launch print in `CPUMeterApp.swift` now also shows the groups and the raw inputs. 1.3 removes it.
+  - Compiled alone with a test driver under Swift 6 and the project's main-actor default, with no warnings. 22 checks pass:
+    - groups: the M4's 6 + 4 with IORegistry's order shuffled, the M1's tied 4 + 4, an M5 Max with Performance and Super (its layout assumed), made-up names and letters across three levels, and a single level;
+    - a fallback to "Cores %" when the counts disagree, when the M4's levels come in the other order, when the IDs have a gap or a duplicate, when IORegistry lists fewer or more cores than were counted, when either source is unreadable or empty, when a name is empty or a cluster type is missing, when there are fewer runs than levels, when a type appears in two runs, when no cores are counted, and for an Ultra numbered E, P, E, P (the known limit below);
+    - the label "Efficiency %".
+  - Live on the M4, the driver and the sandboxed Debug app both report **Efficiency % 0–5, then Performance % 6–9**, from `perflevel0` Performance ×4 and `perflevel1` Efficiency ×6.
+  - 100,000 reads of both sources leave the memory footprint flat at 2,000 KB and the process's Mach ports at 11. A read takes about 70 µs, and the rule runs once at launch.
+  - Debug and Release clean builds, with no compiler warnings. The Release binary has no launch print. It doesn't contain the topology code yet either, because nothing in Release calls it until 1.3.
+  - Copied to the M1's Drop Box as `CPUMeter-1.2-aa25872-dirty.zip`. It's a Debug build, because the print is Debug-only.
+  - **Known limits.** On the M1 the counts tie, so the count check can't catch a reversed order; 1.3's Efficiency-only load proves the M1's labels. An Ultra whose dies number their cores E, P, E, P falls back to "Cores %". FR-8c allows that, and no Mac Chris owns is affected.
+- **Result, the M1 (Nov 4, 2026):** Chris ran the Debug build from Terminal. It reports **Efficiency % 0–3, then Performance % 4–7**, with no fallback, from 8 cores counted, `perflevel0` Performance ×4 and `perflevel1` Efficiency ×4, and IORegistry's IDs 0–3 E and 4–7 P. So the two numberings run in opposite directions on the M1 too, as on the M4, and the rule handles both. macOS also printed a `sandbox_extension_issue_file_to_process … Operation not permitted` line for the app's own folder in `/tmp`. Every read after it worked, so it doesn't affect this check. **Confirmed by Chris** (Nov 4, 2026).
 
 ### Increment 1.3 — Sample on a timer
 - **Goal:** Live percentages that match the test loads, and proof the group labels are right. (FR-8b, FR-9, FR-10, FR-12, FR-14, FR-15, NFR-6)
