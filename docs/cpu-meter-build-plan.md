@@ -1,11 +1,11 @@
 # CPUMeter — Incremental Build Plan
 
-**Version:** 1.3
-**Changelog:** v1.3 (Nov 5, 2026) — Increment 2.3 also builds requirements v1.10's wording: the overall figure reads "All cores: 42%", and the group labels take a colon. v1.2 (Nov 5, 2026) — after Increment 2.2, Chris's design changes (requirements v1.9) get their own increment, the new **2.3, design changes**. The old 2.3, other core counts, is now **2.4** and still completes Phase 2; earlier Results that point to it say 2.4. 3.2's menu lists System Color… first, and 4.2 compares the group averages too. v1.1 (Nov 4, 2026) — Increment 0.2's first test found two places where SwiftUI falls short, so requirements v1.7 adds direct window access and 0.2 now uses it, through the new `WindowAccess.swift`. Added Increment 0.3, snap resizing, at Chris's request. It now completes Phase 0 and takes Phase 0's M1 pass. After 0.2's second test, the scene drops `.windowLevel`, and File's Close replaces macOS's own Close group. v1.0 (Nov 2, 2026) — approved by Chris.
+**Version:** 1.4
+**Changelog:** v1.4 (Nov 5, 2026) — after Increment 2.4, Chris's size shortcuts (requirements v1.11) get their own increment, the new **3.1, Size shortcuts**. Refresh Rate and Colors, which were 3.1 and 3.2, are now **3.2** and **3.3**, and Colors still completes Phase 3. v1.3 (Nov 5, 2026) — Increment 2.3 also builds requirements v1.10's wording: the overall figure reads "All cores: 42%", and the group labels take a colon. v1.2 (Nov 5, 2026) — after Increment 2.2, Chris's design changes (requirements v1.9) get their own increment, the new **2.3, design changes**. The old 2.3, other core counts, is now **2.4** and still completes Phase 2; earlier Results that point to it say 2.4. 3.2's menu lists System Color… first, and 4.2 compares the group averages too. v1.1 (Nov 4, 2026) — Increment 0.2's first test found two places where SwiftUI falls short, so requirements v1.7 adds direct window access and 0.2 now uses it, through the new `WindowAccess.swift`. Added Increment 0.3, snap resizing, at Chris's request. It now completes Phase 0 and takes Phase 0's M1 pass. After 0.2's second test, the scene drops `.windowLevel`, and File's Close replaces macOS's own Close group. v1.0 (Nov 2, 2026) — approved by Chris.
 **Date:** November 5, 2026
-**Companion to:** `cpu-meter-requirements.md` (v1.10) and `cpu-meter-ui-design.md`
+**Companion to:** `cpu-meter-requirements.md` (v1.11) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Chris then asked for some design changes and new wording, recorded in requirements v1.9 and v1.10, and Increment 2.3 (design changes), which builds them, was confirmed on the M4 the same day. Increment 2.4 (other core counts) was confirmed on the M4 and the M1 the same day, completing Phase 2. Phase 3, controls, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Chris then asked for some design changes and new wording, recorded in requirements v1.9 and v1.10, and Increment 2.3 (design changes), which builds them, was confirmed on the M4 the same day. Increment 2.4 (other core counts) was confirmed on the M4 and the M1 the same day, completing Phase 2. Chris then asked for keyboard shortcuts for the three sizes, recorded in requirements v1.11, and Increment 3.1 (size shortcuts) is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -85,7 +85,7 @@ The "Efficiency cores only" load is what proves the group labels are right. A ba
 | `MeterLayout.swift` | The width rule and the design document's numbers | 2.1 |
 | `MeterView.swift` | The `Canvas` drawing | 2.2 |
 | `SimulatedCores.swift` | Other core counts, Debug builds only | 2.4 |
-| `BarColors.swift` | Chosen colors and the system color chooser | 3.2 |
+| `BarColors.swift` | Chosen colors and the system color chooser | 3.3 |
 | `Assets.xcassets/AppIcon` | App icon, from Chris's artwork | 5.1 |
 | `design/AllIcons.jpeg` | Chris's original icon sheet, which the AppIcon images are cut from | 5.1 |
 | `README.md` | Rewritten once the app exists | 5.5 |
@@ -412,13 +412,19 @@ The window comes first because it holds the biggest unknowns. The requirements a
 
 ## Phase 3 — Controls
 
-### Increment 3.1 — Refresh Rate
+### Increment 3.1 — Size shortcuts
+- **Goal:** ⌘1, ⌘2 and ⌘3 choose Small, Medium and Large, exactly as View → Size does. (FR-3, FR-22, FR-24a)
+- **Build:** The three items in View → Size get ⌘1, ⌘2 and ⌘3, which the menu shows. A shortcut sets the same remembered size as the menu, so the window keeps its top-left corner and stays on screen. *(Added at Chris's request on Nov 5, 2026, after 2.4's checks switched sizes many times.)*
+- **Verify:** Headless, in the running app: View → Size's items carry ⌘1, ⌘2 and ⌘3, with the current size checked; no other menu item uses those shortcuts; and each shortcut, sent through the app's menus, gives the right window size with the top-left corner in place, and still keeps the window on screen near the screen's right edge. Chris, on the M4 from Xcode: the menu shows the shortcuts, each one switches size, the checkmark follows, and they work with Keep on Top on and off.
+- **Done when:** Chris confirms the shortcuts on the M4. No M1 pass; Phase 3's is in 3.3.
+
+### Increment 3.2 — Refresh Rate
 - **Goal:** All five rates work and take effect immediately. (FR-18, FR-18a, FR-18b, FR-18c, FR-18d, FR-24)
 - **Build:** **View → Refresh Rate** with 1–5 seconds, stored with `@AppStorage`. Changing it re-arms the timer and primes the baseline again.
 - **Verify:** Headless: the timer interval and tolerance at each rate. Chris: the bars visibly slow at 5 seconds, no false spike appears on a change, the choice survives a relaunch, and the bars keep updating while the menu is open.
 - **Done when:** All of FR-18 is observed.
 
-### Increment 3.2 — Colors
+### Increment 3.3 — Colors
 - **Goal:** Both colors can be changed with the system chooser. (FR-24, FR-28, FR-28a, FR-28b, FR-28c, FR-28d, FR-28e, NFR-5)
 - **Build:** `BarColors.swift` and **View → Colors**: System Color…, User Color… and Reset to Defaults, in the key's order. `NSColorPanel` opens set to the current color and titled with which one is changing, with its opacity control hidden. Chosen colors are stored as sRGB values. With none stored, the adaptive system colors apply.
 - **Risk:** With Keep on Top on, the chooser could open behind CPUMeter, or the app might not quit with the chooser open. Both are checked explicitly. Also, File → Close (from 0.2) closes the meter's window by name, so ⌘W with the chooser in front may quit the app instead of closing the chooser. Check it here, and fix it if so.
@@ -505,7 +511,7 @@ The window comes first because it holds the biggest unknowns. The requirements a
 |---|---|
 | FR-1 | 0.1 |
 | FR-2 | 0.2 |
-| FR-3, FR-3a | 0.2, 0.3 |
+| FR-3, FR-3a | 0.2, 0.3, 3.1 |
 | FR-3b | 2.1, 2.3, 2.4 |
 | FR-3c | 2.1 |
 | FR-3d | 0.3 |
@@ -528,20 +534,21 @@ The window comes first because it holds the biggest unknowns. The requirements a
 | FR-15 | 1.1, 1.3 |
 | FR-16 | 1.1, 2.4 |
 | FR-17 | 4.1 |
-| FR-18, FR-18a–d | 3.1 |
+| FR-18, FR-18a–d | 3.2 |
 | FR-19, FR-20 | 0.2 |
-| FR-22 | 0.2, 0.3 |
+| FR-22 | 0.2, 0.3, 3.1 |
 | FR-21 | 0.1, 0.2 |
 | FR-23 | 0.1 |
-| FR-24 | 0.2, 3.1, 3.2 |
+| FR-24 | 0.2, 3.2, 3.3 |
+| FR-24a | 3.1 |
 | FR-25, FR-26 | 0.2 |
 | FR-27 | 2.2, 2.3 |
-| FR-28, FR-28a–e | 3.2 |
+| FR-28, FR-28a–e | 3.3 |
 | NFR-1 | 1.1, 4.2, 5.2 |
 | NFR-2 | 1.1 *(pre-verified Nov 1)* |
 | NFR-3 | 2.2, 2.3 |
 | NFR-4 | 4.1, 4.2 |
-| NFR-5 | 2.2, 3.2 |
+| NFR-5 | 2.2, 3.3 |
 | NFR-6 | 1.3, 5.3 |
 
 ---
