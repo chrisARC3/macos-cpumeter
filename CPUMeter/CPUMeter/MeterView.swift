@@ -4,10 +4,11 @@
 //
 //  The meter: the top row, the group labels, a bar for each core and the
 //  figure under it, all drawn in a single `Canvas` and never with Charts
-//  (FR-6, FR-7, FR-27). Increment 2.2. `MeterLayout` says where everything
-//  goes; this file adds the colors and text, and snaps the bars to whole
-//  pixels. The bar geometry and the figures' text are pure functions, so they
-//  can be checked without drawing.
+//  (FR-6, FR-7, FR-27). Increment 2.2, revised in Increment 2.3 for system
+//  time at the base of each bar, the key's order, and the labels' averages.
+//  `MeterLayout` says where everything goes; this file adds the colors and
+//  text, and snaps the bars to whole pixels. The bar geometry and the text
+//  are pure functions, so they can be checked without drawing.
 //
 
 import SwiftUI
@@ -45,16 +46,21 @@ struct MeterView: View {
         let metrics = layout.metrics
         drawTopRow(layout: layout, overall: sample?.overall, colors: colors, scale: scale, in: &context)
 
-        let labelFont = Font.system(size: metrics.labelFontSize, weight: .medium)
+        // Monospaced digits in the labels too, so an average changing doesn't
+        // change the label's width (NFR-3, design §8.9).
+        let labelFont = Font.system(size: metrics.labelFontSize, weight: .medium).monospacedDigit()
         let figureFont = Font.system(size: metrics.figureFontSize).monospacedDigit()
 
-        for group in layout.groups {
-            // Left-aligned to the group (design §1). FR-3b made the group
-            // wide enough for it.
-            let label = context.resolve(Text(verbatim: group.label)
-                .font(labelFont).foregroundStyle(colors.secondaryText))
-            context.draw(label, at: CGPoint(x: group.labelFrame.minX, y: group.labelFrame.midY),
-                         anchor: .leading)
+        for (index, group) in layout.groups.enumerated() {
+            // "Name: 24%", left-aligned to the group, so the name never moves
+            // (design §1). FR-3b made the group wide enough for it at 100%.
+            // The fallback row has no label (FR-8c).
+            if let label = group.label {
+                let average = sample.flatMap { index < $0.groups.count ? $0.groups[index] : nil }
+                let text = context.resolve(Text(verbatim: MeterDrawing.labelText(label.name, usage: average))
+                    .font(labelFont).foregroundStyle(colors.secondaryText))
+                context.draw(text, at: CGPoint(x: label.frame.minX, y: label.frame.midY), anchor: .leading)
+            }
 
             for bar in group.bars {
                 let usage = sample.flatMap { bar.core < $0.cores.count ? $0.cores[bar.core] : nil }
@@ -80,11 +86,13 @@ struct MeterView: View {
             .foregroundStyle(colors.primaryText))
         context.draw(overallText, at: CGPoint(x: row.minX, y: row.midY), anchor: .leading)
 
-        // The key, laid out from the right edge in: "● User   ● System".
+        // The key reads "● System   ● User", in the bars' order from the
+        // bottom up (FR-27). It's laid out from the right edge in, so User
+        // comes first here.
         let keyFont = Font.system(size: metrics.keyFontSize)
         let unbounded = CGSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
         var x = row.maxX
-        for (word, color) in [("System", colors.system), ("User", colors.user)] {
+        for (word, color) in [("User", colors.user), ("System", colors.system)] {
             let text = context.resolve(Text(verbatim: word).font(keyFont).foregroundStyle(colors.secondaryText))
             context.draw(text, at: CGPoint(x: x, y: row.midY), anchor: .trailing)
             x -= text.measure(in: unbounded).width + metrics.keyDotGap
@@ -98,8 +106,8 @@ struct MeterView: View {
         }
     }
 
-    /// A core's track, with its user and system time inside it (FR-9,
-    /// design §3).
+    /// A core's track, with its system time at the bottom and its user time
+    /// above it (FR-9, design §3).
     private nonisolated static func drawBar(_ bar: MeterLayout.Bar, usage: CPUUsage?, metrics: MeterMetrics,
                                             colors: MeterColors, scale: CGFloat,
                                             in context: inout GraphicsContext) {
@@ -112,8 +120,8 @@ struct MeterView: View {
         // Clipped to the track's rounded corners, as in the design canvas.
         var inside = context
         inside.clip(to: shape)
-        if let user = fills.user { inside.fill(Path(user), with: .color(colors.user)) }
         if let system = fills.system { inside.fill(Path(system), with: .color(colors.system)) }
+        if let user = fills.user { inside.fill(Path(user), with: .color(colors.user)) }
     }
 }
 
@@ -160,18 +168,19 @@ nonisolated enum MeterDrawing {
                       height: snap(track.maxY, scale: scale) - minY)
     }
 
-    /// The user part at the bottom of a snapped track and the system part
-    /// above it, on whole pixels, or nil for a part too small to show.
+    /// The system part at the bottom of a snapped track and the user part
+    /// above it (FR-9, design §3), on whole pixels, or nil for a part too
+    /// small to show.
     ///
     /// The top of the bar is always the core's total, to the nearest pixel.
     /// When both parts show, the 1 pt gap between them comes out of the bottom
-    /// of the system part. A system part too thin to keep a pixel after the
-    /// gap is drawn without one, touching the user part, so it doesn't vanish.
-    static func fills(in track: CGRect, usage: CPUUsage, scale: CGFloat) -> (user: CGRect?, system: CGRect?) {
+    /// of the user part. A user part too thin to keep a pixel after the gap is
+    /// drawn without one, touching the system part, so it doesn't vanish.
+    static func fills(in track: CGRect, usage: CPUUsage, scale: CGFloat) -> (system: CGRect?, user: CGRect?) {
         func clamped(_ share: Double) -> CGFloat { CGFloat(min(max(share, 0), 1)) }
         let busyHeight = snap(track.height * clamped(usage.busy), scale: scale)
-        let userHeight = min(snap(track.height * clamped(usage.user), scale: scale), busyHeight)
-        let systemHeight = busyHeight - userHeight
+        let systemHeight = min(snap(track.height * clamped(usage.system), scale: scale), busyHeight)
+        let userHeight = busyHeight - systemHeight
         let pixel = 1 / scale
 
         // Heights are whole pixels, so "at least half a pixel" means "at least
@@ -181,10 +190,10 @@ nonisolated enum MeterDrawing {
                 ? CGRect(x: track.minX, y: track.maxY - bottom - height, width: track.width, height: height)
                 : nil
         }
-        let user = part(from: 0, height: userHeight)
-        let gap = user != nil && systemHeight - partGap >= pixel / 2 ? partGap : 0
-        let system = part(from: userHeight + gap, height: systemHeight - gap)
-        return (user, system)
+        let system = part(from: 0, height: systemHeight)
+        let gap = system != nil && userHeight - partGap >= pixel / 2 ? partGap : 0
+        let user = part(from: systemHeight + gap, height: userHeight - gap)
+        return (system, user)
     }
 
     /// A per-core figure: a whole number with no percent sign (FR-11), or the
@@ -193,10 +202,21 @@ nonisolated enum MeterDrawing {
         usage.map { String(wholePercent($0.busy)) } ?? "–"
     }
 
-    /// The overall figure, such as "CPU 42%" (FR-10), or "CPU –" before the
-    /// first reading (design §6).
+    /// A group label with its average, such as "Efficiency: 24%" (FR-8d), or
+    /// "Efficiency: –" before the first reading (design §6).
+    static func labelText(_ name: String, usage: CPUUsage?) -> String {
+        MeterLayout.labelText(name, percent: usage.map { wholePercent($0.busy) })
+    }
+
+    /// The overall figure's name. "CPU" alone could be read on Activity
+    /// Monitor's per-process scale, where one core is 100% (FR-10).
+    static let overallName = "All cores"
+
+    /// The overall figure, such as "All cores: 42%" (FR-10), or
+    /// "All cores: –" before the first reading (design §6). The same form as
+    /// the group labels (design §1).
     static func overallText(_ usage: CPUUsage?) -> String {
-        usage.map { "CPU \(wholePercent($0.busy))%" } ?? "CPU –"
+        labelText(overallName, usage: usage)
     }
 
     /// A share from 0 to 1 as a whole percentage, rounded to the nearest, as

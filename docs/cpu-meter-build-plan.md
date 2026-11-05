@@ -5,7 +5,7 @@
 **Date:** November 5, 2026
 **Companion to:** `cpu-meter-requirements.md` (v1.10) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Chris then asked for some design changes and new wording, recorded in requirements v1.9 and v1.10, and Increment 2.3, design changes, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Chris then asked for some design changes and new wording, recorded in requirements v1.9 and v1.10, and Increment 2.3 (design changes), which builds them, was confirmed on the M4 the same day. Increment 2.4, other core counts, is next, and completes Phase 2 with the M1 pass. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -63,6 +63,7 @@ The "Efficiency cores only" load is what proves the group labels are right. A ba
 - **Counter read:** `host_processor_info` works from a signed, sandboxed `.app` with no entitlement exceptions, at 3.4–3.7 µs per call, on the M4 (Nov 1).
 - **Core-type lookup:** IORegistry and `sysctl` both work in the sandbox on the M4, where the logical IDs and performance levels run in opposite directions (Nov 1). The M1 numbers them the same way, and the rule groups both Macs correctly (Increment 1.2, Nov 4). Under the Efficiency-only load, only the group labeled "Efficiency %" rises on either Mac, and four busy loops raise only "Performance %" on the M1 (Increment 1.3, Nov 4).
 - **Sampling:** a 1-second timer in the common run-loop modes keeps updating while a menu is open, and the figures follow every test load on both Mac minis (Increment 1.3, Nov 4).
+- **Group averages:** under the Efficiency-only load, only the Efficiency group's average rises in the real window on the M4 (Increment 2.3, Nov 5).
 - **Headless rendering:** SwiftUI's `Canvas` draws to a PNG through `ImageRenderer` from a plain command-line driver, at scale 1.0 and with real text (Nov 2). So Claude can inspect real layouts before Chris sees them.
 - **Figure spacing in `Canvas`:** "100" at 21, 23 and 25 pt per core reads as separate numbers there too (Nov 2).
 - **Rounding in `Canvas`:** at scale 1.0 it reports text widths rounded up to whole points: "Performance %" measures 77, 83 and 90 against AppKit's 76.1, 82.9 and 89.5. The width rule uses AppKit's figures, because it has to run before anything is drawn. 2.1 confirms the difference doesn't show.
@@ -341,6 +342,42 @@ The window comes first because it holds the biggest unknowns. The requirements a
   - the Efficiency-cores-only load raises the Efficiency average and not the other;
   - under the every-core load, the top row and the labels read 100% and every figure is readable.
 - **Done when:** Chris confirms the window matches the revised design on the M4. No M1 pass; Phase 2's is in 2.4.
+- **Plan agreed with Chris (Nov 5, 2026):** no new files. One function forms every label, "Name: 24%" or "Name: –", for both the width rule and the drawing, and the top row uses it too, as "All cores: 42%". At each size the width is worked out with the full names and again with "Perf", and "Perf" is kept only where it gives a narrower window. A group's label is part of the layout only when the row is labeled, so the fallback row has none.
+- **Result, Claude's checks (Nov 5, 2026):**
+  - `CPUSampler`: each sample also holds each group's average, from that group's summed raw ticks, through the same function as the overall figure. A core ID past the end of the read is skipped.
+  - `CoreTopology`: `CoreGroup` no longer forms the " %" label. Each name stays exactly as macOS gives it, and the fallback row's "Cores" is never shown.
+  - `MeterLayout`: the label text, labels measured at their widest ("Name: 100%") with monospaced digits, FR-8e's "Perf", and the unlabeled fallback row, whose bars start where the label would be.
+  - `MeterView`: system time at the bottom of each bar and user time above it, with the 1 pt gap out of the user part; the key reading System, User; the top row reading "All cores: 42%"; and each label showing its group's average in monospaced digits.
+  - `CPUMeterApp`: the fallback row is built without labels.
+
+  Two test drivers compile the real files under Swift 6 with no warnings.
+  - The layout, 19,126 checks, all pass:
+    - **all 57 widths match requirements §6 v1.10,** both with design §7's figures and with live AppKit measurement. 11 differ from 2.2's, as §6 marks them. Live measurement matches design §7's label widths to three decimals;
+    - **"Perf" appears in exactly three places:** the MacBook Neo at Small and Medium, and the 10-core M4 and M5 at Small. At each, "Performance" would have made the window wider. No other name changes;
+    - at every layout and size, every label at its widest fits its group. The tightest is "Efficiency: 100%" on the 8-core M1 Pro and the 16-core M3 Max and M4 Max at Small, with 0.012 pt spare;
+    - "All cores: 100%" and the key fit the top row everywhere, leaving 27.3, 114.2 and 196.0 pt at the base widths, as design §7 says;
+    - names in other words and languages, such as German and Japanese ones, show unchanged, and the window widens to fit them (FR-8a);
+    - the fallback row at all 15 core counts: no label, bars 89, 152 and 215 tall, ending where labeled bars end, and widths from the minimum width per core alone;
+    - this Mac: 246 × 150, 360 × 225 and 480 × 300. The labels are "Efficiency" and "Perf" at Small, and "Efficiency" and "Performance" at Medium and Large. "Perf: 100%" has 27.7 pt spare at Small, and "Performance: 100%" 19.3 at Medium;
+    - `Canvas` at scale 1.0 draws every label at its widest inside its group, at every layout and size. At the tightest, "Efficiency: 100%" ends at 84 in the M1 Pro's 84.50, although `Canvas` measures it as 85.
+  - The drawing, 14,554,734 geometry checks, all pass, at all 19 layouts and two fallback rows, at all three sizes, at scales 1 and 2:
+    - every reading in steps of 0.25%, on the labeled bars and the fallback row's taller ones: the top of the bar is within half a pixel of the total, the system part sits at the base within half a pixel of its share, the gap comes out of the user part, and a user part too thin for the gap touches the system part;
+    - the text: "All cores: –", "All cores: 42%", "Efficiency: –", "Perf: 13%", "Performance: 100%" and the figures;
+    - **group averages from raw ticks:** with uneven tick totals, a Performance average of 30.28% from the ticks, where a mean of the per-core shares would give 35.32%; requirements §8 item 25's example, where 24% and 13% give 20% overall; a group with no ticks shows the dash; uneven groups of 1, 5 and 3 cores; and the fallback row's average equal to the overall figure.
+  - The real view rendered at scale 1.0 on the M4's layout, in Dark and Light, at all three sizes: no reading yet, mixed readings, full load, a row of edge cases, and the fallback row with and without a reading. Claude inspected each. 664 pixel checks pass:
+    - every bar's edges are sharp, in exactly the system blue or orange;
+    - each mixed bar is orange at its base and blue at its top;
+    - the key's orange dot is left of its blue one;
+    - at full load, 33, 113 and 196 clear pixel columns separate "All cores: 100%" from the key;
+    - every label's text stays inside its group at full load;
+    - the fallback row's taller track starts where the label would be.
+  - Debug and Release clean builds, with no compiler warnings.
+  - The Release app on the M4, with Chris's settings saved first and restored after:
+    - 246 × 182, 360 × 257 and 480 × 332 with the title bar, at Small, Medium and Large, at Keep on Top's level, with the top-left corner in place;
+    - no console output;
+    - **CPU use:** about 0.65% of one core at Small and at Large, from the process's CPU time over 60 and 120 seconds. A build of 2.2 run the same way, twice each, alternating, used the same, so 2.3 adds nothing. `ps`'s `%cpu` reads 0.0–0.1 for about the first 25 seconds after launch, so 2.2's 10 one-second samples understated it. Increment 5.2 measures it over an hour.
+  - Not covered by Claude's checks: the text in the real window, and the test loads.
+- **Result, Chris's test (Nov 5, 2026):** run from Xcode on the M4 at all three sizes, in Dark and Light, with every check in the list above. Everything looked exactly as predicted and expected. **Confirmed by Chris** (Nov 5, 2026). No M1 pass for 2.3; Phase 2's is in 2.4.
 
 ### Increment 2.4 — Other core counts
 - **Goal:** See every Mac in the requirements' table, drawn by the real code. (FR-3b, FR-8a, FR-8c, FR-8e, FR-11)

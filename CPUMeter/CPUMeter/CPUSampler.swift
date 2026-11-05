@@ -3,8 +3,9 @@
 //  CPUMeter
 //
 //  Samples every core on a timer and works out the percentages the meter
-//  shows (FR-9, FR-10, FR-12, FR-14, FR-15). Increment 1.3. The arithmetic is
-//  kept in pure functions, so it can be checked without a timer.
+//  shows (FR-8d, FR-9, FR-10, FR-12, FR-14, FR-15). Increment 1.3; each
+//  group's average since Increment 2.3. The arithmetic is kept in pure
+//  functions, so it can be checked without a timer.
 //
 
 import Foundation
@@ -27,6 +28,12 @@ nonisolated struct CPUSample: Equatable, Sendable {
     /// reported no ticks. That core shows the dash, as before the first
     /// reading, so it can't be mistaken for 0% (NFR-4, design §8.3).
     var cores: [CPUUsage?]
+
+    /// Each core group's average, in the topology's group order, from the raw
+    /// ticks summed over that group's cores, as the overall figure is
+    /// (FR-8d). Nil for a group whose cores reported no ticks; its label
+    /// shows the dash.
+    var groups: [CPUUsage?]
 
     /// Across all cores, from the raw ticks summed over every core rather than
     /// by averaging rounded figures (FR-10). Nil if no core reported ticks.
@@ -108,7 +115,8 @@ final class CPUSampler {
         // becomes the baseline, so the next tick measures again.
         let changes = baseline.flatMap { CoreCounters.changes(from: $0, to: current) }
         baseline = current
-        sample = changes.map(Self.sample(from:))
+        let groups = topology.groups
+        sample = changes.map { Self.sample(from: $0, groups: groups) }
     }
 
     /// The share of time spent on user and system work, from the raw ticks
@@ -129,8 +137,16 @@ final class CPUSampler {
     }
 
     /// Every figure one update shows, from one set of tick changes.
-    nonisolated static func sample(from changes: [TickChange]) -> CPUSample {
+    ///
+    /// - Parameters:
+    ///   - changes: Each core's tick change, in logical core order.
+    ///   - groups: The core groups, whose logical IDs index `changes`. An ID
+    ///     past the end is skipped, so a group can't read another core's ticks.
+    nonisolated static func sample(from changes: [TickChange], groups: [CoreGroup]) -> CPUSample {
         CPUSample(cores: changes.map { usage(of: CollectionOfOne($0)) },
+                  groups: groups.map { group in
+                      usage(of: group.cores.lazy.filter { changes.indices.contains($0) }.map { changes[$0] })
+                  },
                   overall: usage(of: changes))
     }
 }

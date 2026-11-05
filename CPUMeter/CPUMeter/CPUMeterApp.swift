@@ -47,7 +47,9 @@ struct CPUMeterApp: App {
     init() {
         let sampler = CPUSampler()
         _sampler = State(initialValue: sampler)
-        layouts = MeterLayouts(groups: sampler.topology.groups)
+        // The fallback row has no label (FR-8c, Increment 2.3).
+        layouts = MeterLayouts(groups: sampler.topology.groups,
+                               labeled: sampler.topology.fallbackReason == nil)
     }
 
     var body: some Scene {

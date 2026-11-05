@@ -13,28 +13,26 @@ import IOKit
 
 /// One group of bars: the cores of one type, under one label (FR-8).
 nonisolated struct CoreGroup: Equatable, Sendable {
-    /// macOS's name for this type of core, such as "Efficiency" (FR-8a), or
-    /// "Cores" for the fallback row (FR-8c).
+    /// macOS's name for this type of core, exactly as macOS gives it, such as
+    /// "Efficiency" (FR-8a), or "Cores" for the fallback row (FR-8c). The
+    /// meter's layout forms the label from it (FR-8d, FR-8e).
     var name: String
 
     /// Logical core IDs in ascending order. Each one indexes the array that
     /// `CoreCounters.read()` returns.
     var cores: [Int]
-
-    /// The name followed by " %", such as "Efficiency %" (FR-8d).
-    var label: String { name + " %" }
 }
 
 nonisolated struct CoreTopology: Equatable, Sendable {
     /// The groups, from lowest to highest performance, left to right (FR-8b).
     var groups: [CoreGroup]
 
-    /// Why the single "Cores %" row is shown instead (FR-8c), or nil when the
+    /// Why the single unlabeled row is shown instead (FR-8c), or nil when the
     /// core types were determined.
     var fallbackReason: String?
 
-    /// The fallback row's name (FR-8c). A label that names no core type can't
-    /// be wrong.
+    /// The fallback row's name (FR-8c). The row has no label, so it is never
+    /// shown, and no core type can be named wrongly.
     static let fallbackName = "Cores"
 
     /// What the rule works from, as read from IORegistry and `sysctl`.
@@ -74,7 +72,7 @@ nonisolated struct CoreTopology: Equatable, Sendable {
 
     /// Groups the cores by type, names each group from macOS, and orders the
     /// groups from lowest to highest performance. Anything that doesn't fit
-    /// gives the single "Cores %" row (FR-8c) rather than a label that could
+    /// gives the single unlabeled row (FR-8c) rather than a label that could
     /// be wrong.
     ///
     /// macOS numbers its performance levels and its cores in opposite
