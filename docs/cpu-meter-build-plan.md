@@ -5,7 +5,7 @@
 **Date:** November 5, 2026
 **Companion to:** `cpu-meter-requirements.md` (v1.10) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Chris then asked for some design changes and new wording, recorded in requirements v1.9 and v1.10, and Increment 2.3 (design changes), which builds them, was confirmed on the M4 the same day. Increment 2.4, other core counts, is next, and completes Phase 2 with the M1 pass. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Chris then asked for some design changes and new wording, recorded in requirements v1.9 and v1.10, and Increment 2.3 (design changes), which builds them, was confirmed on the M4 the same day. Increment 2.4 (other core counts) was confirmed on the M4 and the M1 the same day, completing Phase 2. Phase 3, controls, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -64,6 +64,7 @@ The "Efficiency cores only" load is what proves the group labels are right. A ba
 - **Core-type lookup:** IORegistry and `sysctl` both work in the sandbox on the M4, where the logical IDs and performance levels run in opposite directions (Nov 1). The M1 numbers them the same way, and the rule groups both Macs correctly (Increment 1.2, Nov 4). Under the Efficiency-only load, only the group labeled "Efficiency %" rises on either Mac, and four busy loops raise only "Performance %" on the M1 (Increment 1.3, Nov 4).
 - **Sampling:** a 1-second timer in the common run-loop modes keeps updating while a menu is open, and the figures follow every test load on both Mac minis (Increment 1.3, Nov 4).
 - **Group averages:** under the Efficiency-only load, only the Efficiency group's average rises in the real window on the M4 (Increment 2.3, Nov 5).
+- **Other core counts:** every Mac in the requirements' §6, drawn by the real code from simulated cores, is clean at all three sizes, with no overlaps, clipping or figures running together (Increment 2.4, Nov 5). Above 10 cores, that's as far as testing can go.
 - **Headless rendering:** SwiftUI's `Canvas` draws to a PNG through `ImageRenderer` from a plain command-line driver, at scale 1.0 and with real text (Nov 2). So Claude can inspect real layouts before Chris sees them.
 - **Figure spacing in `Canvas`:** "100" at 21, 23 and 25 pt per core reads as separate numbers there too (Nov 2).
 - **Rounding in `Canvas`:** at scale 1.0 it reports text widths rounded up to whole points: "Performance %" measures 77, 83 and 90 against AppKit's 76.1, 82.9 and 89.5. The width rule uses AppKit's figures, because it has to run before anything is drawn. 2.1 confirms the difference doesn't show.
@@ -384,6 +385,28 @@ The window comes first because it holds the biggest unknowns. The requirements a
 - **Build:** `SimulatedCores.swift`, compiled only in Debug builds: a launch argument such as `-simulateCores Performance:24,Super:12` replaces the detected groups and feeds them synthetic ticks.
 - **Verify:** Claude renders all 19 core layouts at all three sizes as a contact sheet and inspects it for overlaps, clipping and figures running together. Chris spot-checks 36 cores, the fallback row and the MacBook Neo, with its "Perf" at Small and Medium, in the real window. A check of the Release binary confirms the simulation code isn't in it.
 - **Done when:** Every configuration is clean, and Release has no simulation code. **Completes Phase 2**, including the M1 pass. This is the limit of what can be tested above 10 cores, and the README will say so.
+- **Plan agreed with Chris (Nov 5, 2026):** Xcode's Run uses Release, so Chris runs the spot checks from Terminal, on a Debug build Claude makes, with commands that save Chris's settings first and restore them after. The argument lists the groups left to right, such as `-simulateCores Efficiency:4,Performance:2`, with each name exactly as typed. A bare count, such as `-simulateCores 10`, gives the unlabeled fallback row. `-simulateLoad full` puts every core at 100%; otherwise a pattern moves across the bars. Only the core groups and the counter read are replaced: the made-up counters go through the app's own sampling.
+- **Result, Claude's checks (Nov 5, 2026):**
+  - `SimulatedCores.swift`, all inside `#if DEBUG`: the launch arguments, the simulated groups, and made-up counters at 100 ticks per core per read. The moving pattern is a wave that crosses the bars every 20 reads, on a level that rises and falls every 30, with system time 10–40% of each core's busy time. The counters start just below the 32-bit limit, so they wrap within seconds, and FR-16's wrapping subtraction runs in the live path too. A malformed argument prints why, and the app shows the Mac's own cores.
+  - `CPUSampler`: in a Debug build with a simulation, the simulated groups replace the detected ones, and `start()` and `tick()` read the simulated counters, through one `readCounters()`. In Release, that function is `CoreCounters.read()` alone.
+  - A test driver compiles the real files with `DEBUG` under Swift 6 with no warnings. 3,463,960 logic checks pass:
+    - the 19 layouts' arguments, the fallback row, and names with spaces or in other languages give exactly the groups they name. 13 malformed values and 5 malformed combinations of arguments are refused, each with its reason;
+    - every read gives each core exactly 100 ticks, at every core count from 1 to 64 over 600 reads. The moving pattern reaches 0, 100 and every figure between, and full load reads 100 on every core, every group and overall;
+    - through the real counters and sampling, each figure equals its ticks exactly, across the wrap. The overall figure moves between 30% and 70%, and the group averages differ by up to 75 points;
+    - **all 57 widths match requirements §6 v1.10** through the simulation, with live measurement, and "Perf" appears in exactly FR-8e's three places. The fallback row is 240, 360 and 480 wide at 10 cores, and 780, 856 and 932 at 36.
+  - **The contact sheets:** the 19 layouts, plus the fallback row at 10 and 36 cores and German and Japanese names, drawn by the real `MeterView` at scale 1.0, at all three sizes, in Dark and Light, at full load and with the moving pattern: 48 sheets. Claude inspected every full-load sheet in Dark, and samples of the moving pattern and of Light: no overlaps, no clipping, and no figures running together. 7,752 pixel checks pass:
+    - nothing is drawn in the margins, so nothing is cut off at the window's edges;
+    - at full load, every bar is blue at its top and orange at its base;
+    - at full load, neighboring figures are at least 3 clear pixel columns apart at Small and Medium, and 4 at Large;
+    - every label's ink stays within its group. The tightest is "Efficiency: 100%" on the 8-core M1 Pro at Medium, whose ink ends exactly at the group's edge;
+    - the top row keeps at least 27, 113 and 196 clear columns between "All cores: 100%" and the key.
+  - Debug and Release clean builds, with no compiler warnings. **The Release binary has no simulation code:** none of the simulation's text, such as `simulateCores` or its messages, and no `SimulatedCores` symbols. The Debug build has both, which shows the check would find them.
+  - The running apps on the M4, with Chris's settings saved first and restored after:
+    - the Debug build at 36 cores is 792 × 182, 870 × 257 and 948 × 332 with the title bar, at both loads. The MacBook Neo and the 10-core fallback row are 240, 360 and 480 wide. Each run prints one line naming the simulation;
+    - with a malformed argument, the Debug build prints why and shows the M4: 246, 360 and 480 wide;
+    - the Release build ignores the argument: 246, 360 and 480 wide, with no console output.
+  - Not covered by Claude's checks: the real window with simulated cores, and the M1.
+- **Result, Chris's test (Nov 5, 2026):** on the M4, the Debug build run from Terminal: 36 cores with the moving pattern and at full load, the MacBook Neo, and the 10-core fallback row, at all three sizes. On the M1, the Release build `CPUMeter-2.4-48d9c66-dirty.zip`, with "Efficiency" and "Performance" in full at all three sizes, under the test loads. Chris: "All tests pass perfectly." **Confirmed by Chris** (Nov 5, 2026), completing Phase 2.
 
 ---
 
@@ -503,7 +526,7 @@ The window comes first because it holds the biggest unknowns. The requirements a
 | FR-13 | 1.1 |
 | FR-14 | 1.3, 2.2 |
 | FR-15 | 1.1, 1.3 |
-| FR-16 | 1.1 |
+| FR-16 | 1.1, 2.4 |
 | FR-17 | 4.1 |
 | FR-18, FR-18a–d | 3.1 |
 | FR-19, FR-20 | 0.2 |

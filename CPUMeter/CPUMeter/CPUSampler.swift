@@ -5,7 +5,8 @@
 //  Samples every core on a timer and works out the percentages the meter
 //  shows (FR-8d, FR-9, FR-10, FR-12, FR-14, FR-15). Increment 1.3; each
 //  group's average since Increment 2.3. The arithmetic is kept in pure
-//  functions, so it can be checked without a timer.
+//  functions, so it can be checked without a timer. In Debug builds,
+//  `SimulatedCores.swift` can stand in for the Mac's cores (Increment 2.4).
 //
 
 import Foundation
@@ -68,7 +69,20 @@ final class CPUSampler {
     /// Seconds between updates. View → Refresh Rate (3.1) makes it a setting.
     @ObservationIgnored private let interval: TimeInterval = 1
 
+    #if DEBUG
+    /// Other cores in place of the Mac's own, when the launch arguments ask
+    /// for them (Increment 2.4). Debug builds only.
+    @ObservationIgnored private var simulation: SimulatedCores?
+    #endif
+
     init() {
+        #if DEBUG
+        if let simulation = SimulatedCores.fromLaunchArguments() {
+            self.simulation = simulation
+            topology = simulation.topology
+            return
+        }
+        #endif
         topology = CoreTopology.current(coreCount: CoreCounters.read()?.count ?? 0)
     }
 
@@ -79,7 +93,7 @@ final class CPUSampler {
     /// to call again: it restarts the timer and reads a new baseline.
     func start() {
         stop()
-        baseline = CoreCounters.read()
+        baseline = readCounters()
 
         let timer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
             // The timer is on the main run loop, so this runs on the main
@@ -107,7 +121,7 @@ final class CPUSampler {
         // A failed read keeps the baseline, so the next read measures the
         // whole gap. Each percentage is a share of ticks, not of clock time,
         // so a longer interval still gives the right figures (FR-15).
-        guard let current = CoreCounters.read() else {
+        guard let current = readCounters() else {
             sample = nil
             return
         }
@@ -117,6 +131,15 @@ final class CPUSampler {
         baseline = current
         let groups = topology.groups
         sample = changes.map { Self.sample(from: $0, groups: groups) }
+    }
+
+    /// Every core's counters: the Mac's own, or in a Debug build with a
+    /// simulation, the simulated ones (Increment 2.4).
+    private func readCounters() -> [CoreTicks]? {
+        #if DEBUG
+        if let simulated = simulation?.read() { return simulated }
+        #endif
+        return CoreCounters.read()
     }
 
     /// The share of time spent on user and system work, from the raw ticks
