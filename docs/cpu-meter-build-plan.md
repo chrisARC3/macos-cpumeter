@@ -1,11 +1,11 @@
 # CPUMeter — Incremental Build Plan
 
-**Version:** 1.2
-**Changelog:** v1.2 (Nov 5, 2026) — after Increment 2.2, Chris's design changes (requirements v1.9) get their own increment, the new **2.3, design changes**. The old 2.3, other core counts, is now **2.4** and still completes Phase 2; earlier Results that point to it say 2.4. 3.2's menu lists System Color… first, and 4.2 compares the group averages too. v1.1 (Nov 4, 2026) — Increment 0.2's first test found two places where SwiftUI falls short, so requirements v1.7 adds direct window access and 0.2 now uses it, through the new `WindowAccess.swift`. Added Increment 0.3, snap resizing, at Chris's request. It now completes Phase 0 and takes Phase 0's M1 pass. After 0.2's second test, the scene drops `.windowLevel`, and File's Close replaces macOS's own Close group. v1.0 (Nov 2, 2026) — approved by Chris.
+**Version:** 1.3
+**Changelog:** v1.3 (Nov 5, 2026) — Increment 2.3 also builds requirements v1.10's wording: the overall figure reads "All cores: 42%", and the group labels take a colon. v1.2 (Nov 5, 2026) — after Increment 2.2, Chris's design changes (requirements v1.9) get their own increment, the new **2.3, design changes**. The old 2.3, other core counts, is now **2.4** and still completes Phase 2; earlier Results that point to it say 2.4. 3.2's menu lists System Color… first, and 4.2 compares the group averages too. v1.1 (Nov 4, 2026) — Increment 0.2's first test found two places where SwiftUI falls short, so requirements v1.7 adds direct window access and 0.2 now uses it, through the new `WindowAccess.swift`. Added Increment 0.3, snap resizing, at Chris's request. It now completes Phase 0 and takes Phase 0's M1 pass. After 0.2's second test, the scene drops `.windowLevel`, and File's Close replaces macOS's own Close group. v1.0 (Nov 2, 2026) — approved by Chris.
 **Date:** November 5, 2026
-**Companion to:** `cpu-meter-requirements.md` (v1.9) and `cpu-meter-ui-design.md`
+**Companion to:** `cpu-meter-requirements.md` (v1.10) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Chris then asked for some design changes, recorded in requirements v1.9, and Increment 2.3, design changes, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Chris then asked for some design changes and new wording, recorded in requirements v1.9 and v1.10, and Increment 2.3, design changes, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -321,14 +321,15 @@ The window comes first because it holds the biggest unknowns. The requirements a
   **Confirmed by Chris** (Nov 5, 2026). No M1 pass for 2.2; Phase 2's is in 2.4. Chris then asked for some design changes, which became 2.3.
 
 ### Increment 2.3 — Design changes
-- **Goal:** The meter matches Chris's changes after 2.2, in requirements v1.9 and the UI design's Nov 5 revision: system time at the bottom of each bar, System first in the key, each group's average in its label, "Perf" only where "Performance" would widen the window, and no label on the fallback row. (FR-3b, FR-8a, FR-8c, FR-8d, FR-8e, FR-9, FR-11, FR-27, NFR-3)
+- **Goal:** The meter matches Chris's changes after 2.2, in requirements v1.9 and v1.10 and the UI design's Nov 5 revisions: system time at the bottom of each bar, System first in the key, the overall figure as "All cores: 42%", each group's average in its label with a colon, "Perf" only where "Performance" would widen the window, and no label on the fallback row. (FR-3b, FR-8a, FR-8c, FR-8d, FR-8e, FR-9, FR-10, FR-11, FR-27, NFR-3)
 - **Build:**
   - `CPUSampler.swift`: each sample also holds each group's average, from that group's raw ticks, as the overall figure is calculated.
-  - `MeterLayout.swift`: labels measured at their widest ("Efficiency 100%", in monospaced digits); "Perf" at a size where "Performance" would make the window wider; on the fallback row, no label and taller bars (89, 152 and 215).
-  - `MeterView.swift`: the system part at the bottom and the user part above it, with the gap coming out of the user part; the key reading System, then User; each label drawn with its average, or a dash before the first reading.
+  - `MeterLayout.swift`: labels measured at their widest ("Efficiency: 100%", in monospaced digits); "Perf" at a size where "Performance" would make the window wider; on the fallback row, no label and taller bars (89, 152 and 215).
+  - `MeterView.swift`: the system part at the bottom and the user part above it, with the gap coming out of the user part; the key reading System, then User; the overall figure as "All cores: 42%"; each label drawn with a colon and its average, or a dash before the first reading.
   - `CoreTopology.swift` and `CPUMeterApp.swift`, only as far as the label text and the fallback need.
 - **Verify:** Headless, on the real files:
-  - all 57 widths match requirements §6 v1.9, with live measurement, and "Perf" appears in exactly the two places FR-8e names;
+  - all 57 widths match requirements §6 v1.10, with live measurement, and "Perf" appears in exactly the three places FR-8e names;
+  - "All cores: 100%" and the key fit the top row at every size, with the room design §7 gives;
   - at every layout and size, every label at its widest fits within its group, and on the fallback row the taller bars end where the other rows' bars do;
   - the group averages from raw ticks, including uneven groups;
   - the bar parts at every reading in steps of 0.25%, with system time at the base;
@@ -336,15 +337,15 @@ The window comes first because it holds the biggest unknowns. The requirements a
 
   Then Chris runs it on the M4 from Xcode, at all three sizes, in Dark and Light:
   - the system-time load grows the orange base of a bar and the user-time load the blue part above it;
-  - the labels read "Efficiency nn%" and "Perf nn%" at Small, and "Performance nn%" at Medium and Large;
+  - the top row reads "All cores: nn%", and the labels read "Efficiency: nn%" and "Perf: nn%" at Small, and "Performance: nn%" at Medium and Large;
   - the Efficiency-cores-only load raises the Efficiency average and not the other;
-  - under the every-core load, the labels read 100% and every figure is readable.
+  - under the every-core load, the top row and the labels read 100% and every figure is readable.
 - **Done when:** Chris confirms the window matches the revised design on the M4. No M1 pass; Phase 2's is in 2.4.
 
 ### Increment 2.4 — Other core counts
 - **Goal:** See every Mac in the requirements' table, drawn by the real code. (FR-3b, FR-8a, FR-8c, FR-8e, FR-11)
 - **Build:** `SimulatedCores.swift`, compiled only in Debug builds: a launch argument such as `-simulateCores Performance:24,Super:12` replaces the detected groups and feeds them synthetic ticks.
-- **Verify:** Claude renders all 19 core layouts at all three sizes as a contact sheet and inspects it for overlaps, clipping and figures running together. Chris spot-checks 36 cores, the fallback row and the MacBook Neo, with its "Perf" at Small, in the real window. A check of the Release binary confirms the simulation code isn't in it.
+- **Verify:** Claude renders all 19 core layouts at all three sizes as a contact sheet and inspects it for overlaps, clipping and figures running together. Chris spot-checks 36 cores, the fallback row and the MacBook Neo, with its "Perf" at Small and Medium, in the real window. A check of the Release binary confirms the simulation code isn't in it.
 - **Done when:** Every configuration is clean, and Release has no simulation code. **Completes Phase 2**, including the M1 pass. This is the limit of what can be tested above 10 cores, and the README will say so.
 
 ---
@@ -459,7 +460,7 @@ The window comes first because it holds the biggest unknowns. The requirements a
 | FR-8d | 2.1, 2.2, 2.3 |
 | FR-8e | 2.3, 2.4 |
 | FR-9 | 1.3, 2.2, 2.3 |
-| FR-10 | 1.3, 2.2 |
+| FR-10 | 1.3, 2.2, 2.3 |
 | FR-11 | 2.1, 2.2, 2.3, 2.4 |
 | FR-12 | 1.3 |
 | FR-13 | 1.1 |
