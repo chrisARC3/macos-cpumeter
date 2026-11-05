@@ -102,7 +102,6 @@ final class CPUSampler {
         // so a longer interval still gives the right figures (FR-15).
         guard let current = CoreCounters.read() else {
             sample = nil
-            printCheckLine(nil)
             return
         }
         // Reads with different core counts give no changes. The newer read
@@ -110,7 +109,6 @@ final class CPUSampler {
         let changes = baseline.flatMap { CoreCounters.changes(from: $0, to: current) }
         baseline = current
         sample = changes.map(Self.sample(from:))
-        printCheckLine(changes)
     }
 
     /// The share of time spent on user and system work, from the raw ticks
@@ -134,28 +132,5 @@ final class CPUSampler {
     nonisolated static func sample(from changes: [TickChange]) -> CPUSample {
         CPUSample(cores: changes.map { usage(of: CollectionOfOne($0)) },
                   overall: usage(of: changes))
-    }
-
-    // MARK: - TEMPORARY (Increment 1.3, removed in 2.2)
-
-    /// Prints the overall figure and each group's average on every tick, so
-    /// the figures can be compared with the test loads and Activity Monitor.
-    /// A group's average comes from its raw ticks, like the overall figure.
-    /// "ticks/core" shows the real time between ticks, at about 100 a second.
-    private func printCheckLine(_ changes: [TickChange]?) {
-        func percent(_ share: Double) -> String { String(format: "%.1f", share * 100) }
-
-        guard let changes, let overall = Self.usage(of: changes) else {
-            print("CPUMeter 1.3: no reading (a failed read, a changed core count, or no ticks)")
-            return
-        }
-        let groups = topology.groups.map { group in
-            let usage = Self.usage(of: group.cores.filter(changes.indices.contains).map { changes[$0] })
-            return "\(group.label) " + (usage.map { percent($0.busy) } ?? "–")
-        }
-        let ticksPerCore = changes.reduce(0) { $0 + $1.total } / UInt64(changes.count)
-        print("CPUMeter 1.3: CPU \(percent(overall.busy))% "
-              + "(user \(percent(overall.user)), system \(percent(overall.system))) | "
-              + groups.joined(separator: " | ") + " | \(ticksPerCore) ticks/core")
     }
 }

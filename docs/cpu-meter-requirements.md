@@ -214,4 +214,4 @@ This is a personal-use utility, built in Swift with Xcode, for Apple Silicon Mac
 
 ---
 
-*Next step: Increment 2.2, bars on screen, of `cpu-meter-build-plan.md`. Increment 2.1 was confirmed on Nov 5, 2026, with all 57 widths in §6 matching the width rule (FR-3b).*
+*Next step: a discussion of some minor design changes with Chris, then Increment 2.3, other core counts, of `cpu-meter-build-plan.md`. Increment 2.1 was confirmed on Nov 5, 2026, with all 57 widths in §6 matching the width rule (FR-3b), and Increment 2.2, bars on screen, the same day.*

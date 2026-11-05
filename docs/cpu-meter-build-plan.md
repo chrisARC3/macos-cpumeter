@@ -5,7 +5,7 @@
 **Date:** November 4, 2026
 **Companion to:** `cpu-meter-requirements.md` (v1.8) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026. Increment 2.2, bars on screen, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Increment 2.3, other core counts, is next, after Chris and Claude discuss some minor design changes. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -286,6 +286,39 @@ The window comes first because it holds the biggest unknowns. The requirements a
 - **Build:** `MeterView.swift`, a single `Canvas` and never Charts: the top row, group labels, bars with their tracks and 1 pt gap, and per-core figures in monospaced digits. The dash state shows before the first reading. Default colors come from the system's blue and orange. Bar edges are snapped to whole pixels. The temporary console output is removed.
 - **Verify:** Claude renders the real view headlessly at scale 1.0, in dark and light, and inspects it. Then Chris runs it on the M4 and compares it with the canvas: the system-time load grows the orange part of a bar, the user-time load grows the blue part, and the every-core load shows every figure at or near 100 and still readable.
 - **Done when:** Chris confirms the window matches the design at all three sizes, in both appearances.
+- **Plan agreed with Chris (Nov 5, 2026):** the meter takes the layout and the latest sample as plain values, not the sampler. As in the design canvas, each bar's colored parts are clipped to the track's rounded corners, and figures are rounded to the nearest whole number. Two of Claude's calls, which Chris accepted:
+  - **pixel snapping:** every bar keeps the same whole-pixel width, and its left edge moves to the nearest pixel, so a gap between bars can be a pixel narrower or wider than the design's;
+  - **the 1 pt gap** between user and system comes out of the bottom of the system part, so the top of a bar always shows the true total. The canvas adds the gap instead, so its bars run 1 pt too tall. A system part too thin to keep a pixel after the gap is drawn without one, so it doesn't vanish.
+- **Result, Claude's checks (Nov 5, 2026):** `MeterView.swift` draws the meter in one `Canvas`:
+  - the top row, with the overall figure and the key;
+  - the group labels;
+  - each track, and each bar's user and system parts, clipped to the track;
+  - the figures, in monospaced digits.
+
+  The bar geometry and the figures' text are pure functions, in `MeterDrawing`. The colors are the system's blue and orange, the label colors and the design's track, in `MeterColors`. `CPUMeterApp` shows the meter in place of the placeholder, through a small view that reads the sampler, so each update redraws only the meter. `CPUSampler`'s temporary console line is gone.
+  - A test driver compiles the real files under Swift 6 with no warnings. All 6,867,092 geometry checks pass, at all 19 layouts and the fallback row, at all three sizes, at scales 1 and 2:
+    - every bar's edges are on whole pixels, every bar in a layout is the same width, and each bar stays inside its own cell;
+    - gaps stay within a pixel of the design's: 2–3 at Small, 3–5 at Medium and 4–6 at Large, at scale 1;
+    - every reading in steps of 0.25%: the top of the bar is within half a pixel of the total and the user part within half a pixel of its share, with the gap rule applied;
+    - the ends: 0% draws nothing, and 100% fills the track;
+    - the figures' text: the dash, rounding (99.49 reads 99, 99.51 reads 100) and "CPU –".
+  - The real view rendered at scale 1.0 on the M4's layout, in Dark and Light, at all three sizes: no reading yet, the design canvas's mixed readings, every core at 100, a row of edge cases (thin system parts, one part only, a core with no reading), and the fallback "Cores %" row. Claude inspected each. 510 pixel checks pass:
+    - every bar's left, right and top edges are sharp, with no blended column or row, in exactly the system blue or orange;
+    - the empty track is white at 10% or black at 8% over the window background.
+  - The system colors on macOS 27 differ from the mockup's hex values, as design §4 allows: blue is (0, 145, 255) in Dark and (0, 136, 255) in Light, and orange (255, 146, 48) and (255, 141, 40). The window background is (30, 30, 30) and white.
+  - Debug and Release clean builds, with no compiler warnings.
+  - The Release app on the M4, with Chris's settings saved first and restored after:
+    - 246 × 182, 360 × 257 and 480 × 332 with the title bar, at Small, Medium and Large, with the top-left corner in place;
+    - no console output;
+    - 0.0–0.1% CPU, over 10 one-second samples at Small.
+  - The real window, captured from inside the running Debug app with the debugger at each size, at its backing scale of 1: all 90 edge checks pass, so every bar's left and right edges are sharp in the window too. That capture leaves out text, so it can't show the labels or figures.
+  - Not covered by Claude's checks: the text in the real window, a side-by-side comparison with the design canvas, and the test loads.
+- **Result, Chris's test (Nov 5, 2026):** run from Xcode on the M4 at all three sizes, in Dark and Light. Every test passes:
+  - the window matches the design canvas very well, and still looks very close to Activity Monitor's CPU History;
+  - the system-time load grows the orange part of a bar and the user-time load the blue part;
+  - under the every-core load, the figures are readable.
+
+  **Confirmed by Chris** (Nov 5, 2026). No M1 pass for 2.2; Phase 2's is in 2.3. Before 2.3, Chris wants to discuss some minor design changes.
 
 ### Increment 2.3 — Other core counts
 - **Goal:** See every Mac in the requirements' table, drawn by the real code. (FR-3b, FR-8a, FR-8c, FR-11)

@@ -5,8 +5,8 @@
 //  The app's single window and its menus: three sizes chosen from the menu or
 //  by dragging, Keep on Top, and a remembered size, position and window level.
 //  `MeterSize.swift` holds the sizes and the snap rule, `MeterLayout.swift`
-//  works out each size's width on this Mac, and `WindowAccess.swift` does the
-//  parts SwiftUI can't.
+//  works out each size's width on this Mac, `MeterView.swift` draws the meter,
+//  and `WindowAccess.swift` does the parts SwiftUI can't.
 //
 
 import SwiftUI
@@ -55,12 +55,8 @@ struct CPUMeterApp: App {
         // because this is a one-window app, and because closing a lone `Window`
         // scene quits the app (FR-23).
         Window(Self.windowTitle, id: "main") {
-            let content = layouts.contentSize(of: size)
-            // Temporary placeholder until Increment 2.2 draws the meter. It names
-            // the size so each switch is easy to check.
-            Text(verbatim: "\(size.title) · \(Int(content.width)) × \(Int(content.height))")
-                .foregroundStyle(.secondary)
-                .frame(width: content.width, height: content.height)
+            // The meter at the chosen size (Increment 2.2).
+            LiveMeter(sampler: sampler, layout: layouts[size])
                 // The window can be dragged anywhere from Small to Large (FR-3d).
                 // While it's between sizes, the meter keeps its size, pinned to
                 // the top-left, and the rest shows the window background (design §2).
@@ -117,5 +113,16 @@ struct CPUMeterApp: App {
                 Toggle("Keep on Top", isOn: $keepOnTop)
             }
         }
+    }
+}
+
+/// The meter, showing the sampler's latest update. A view of its own, so that
+/// each update redraws only the meter and not the rest of the window's content.
+private struct LiveMeter: View {
+    let sampler: CPUSampler
+    let layout: MeterLayout
+
+    var body: some View {
+        MeterView(layout: layout, sample: sampler.sample)
     }
 }
