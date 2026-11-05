@@ -2,8 +2,8 @@
 
 **Date:** November 2, 2026
 **Owner:** Chris
-**Status:** Approved by Chris on Nov 2, 2026, with the percent labels in §1 added at approval. Revised Nov 4, 2026, for requirements v1.7: dragging the window snaps to the three sizes (§2), File keeps Close (§5), and the green window button zooms (§8.5). The window behavior is built: by Nov 4, 2026, Phase 0 had been confirmed by Chris, including the three sizes, Keep on Top, snap resizing and the menus in §5. Phase 1, the measurement behind the bars, was confirmed the same day, including the group labels in §1 on both Mac minis. Increment 2.1 works out this page's layout numbers, and the meter itself arrives in Increment 2.2.
-**Requirements:** [cpu-meter-requirements.md](cpu-meter-requirements.md), v1.7. If the two disagree, the requirements win.
+**Status:** Approved by Chris on Nov 2, 2026, with the percent labels in §1 added at approval. Revised Nov 4, 2026, for requirements v1.7: dragging the window snaps to the three sizes (§2), File keeps Close (§5), and the green window button zooms (§8.5). Revised again the same day for requirements v1.8: §7 gives the label widths to three decimals, which the width rule uses. The window behavior is built: by Nov 4, 2026, Phase 0 had been confirmed by Chris, including the three sizes, Keep on Top, snap resizing and the menus in §5. Phase 1, the measurement behind the bars, was confirmed the same day, including the group labels in §1 on both Mac minis. Increment 2.1 works out this page's layout numbers, and the meter itself arrives in Increment 2.2.
+**Requirements:** [cpu-meter-requirements.md](cpu-meter-requirements.md), v1.8. If the two disagree, the requirements win.
 **Design canvas:** https://claude.ai/artifact/UHY36UTxX5jYKkNp33nCYa (private to Chris). It holds the true-size mockups; this document holds the numbers the build uses.
 
 All dimensions are in points.
@@ -129,7 +129,7 @@ Measured on the M4 Mac mini with macOS 27, from real system text. Its display is
 - **Per-core figures:** rendered "100" side by side at full load. At 20, 22 and 24 pt per core they run together; at 21, 23 and 25 pt they read separately. These results set the minimum widths in §2.
 - **Top row at base width:** the overall figure at "CPU 100%" plus the key leaves 58.6 pt spare at Small, 151.2 at Medium and 239.7 at Large.
 - **Title bar at 240 wide:** "CPUMeter 1.0" is 88.2 pt wide and centered, so it starts 6.9 pt clear of the window buttons, which end at 69.
-- **Group labels at 10, 11 and 12 pt:** "Efficiency %" is 61.5, 66.9 and 72.1 pt wide; "Performance %" is 76.1, 82.9 and 89.5; "Super %" is 41.8, 45.5 and 49.1; "Cores %" is 41.6, 45.3 and 48.9.
+- **Group labels at 10, 11 and 12 pt:** "Efficiency %" is 61.5, 66.9 and 72.1 pt wide; "Performance %" is 76.1, 82.9 and 89.5; "Super %" is 41.8, 45.5 and 49.1; "Cores %" is 41.6, 45.3 and 48.9. To three decimals, as the width rule uses them (measured in Increment 2.1, Nov 4, 2026): 61.511, 66.889 and 72.126; 76.130, 82.905 and 89.528; 41.777, 45.503 and 49.148; 41.553, 45.257 and 48.879. The extra precision matters once: the M1 Pro with two Efficiency cores needs 282.05 at Small, so its window is 283 wide.
 - **Label fit:** only groups of two cores need extra width, on the MacBook Neo at Small and on the M1 Pro and M1 Max at Small and Medium. With that width, every label fits within its own group on every Mac in the requirements' §6. On the M4 at Small, "Performance %" has 7.9 pt spare.
 
 ## 8. Decisions Made Without a Direct Question (please veto if any are wrong)
