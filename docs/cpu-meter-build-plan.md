@@ -5,7 +5,7 @@
 **Date:** November 4, 2026
 **Companion to:** `cpu-meter-requirements.md` (v1.8) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1, layout math, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026. Increment 2.2, bars on screen, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -258,6 +258,28 @@ The window comes first because it holds the biggest unknowns. The requirements a
 - **Verify:** A headless driver runs the 19 core layouts behind that table at all three sizes and compares the results with it, then confirms every label fits its group and every core gets its minimum width. Plug the result into the 0.2 window, and Chris confirms the M4 opens at 246, 360 and 480 wide.
 - **Done when:** All 57 widths match. Any mismatch means the code or the table is wrong, and it gets resolved here.
 - **Found before the code (Nov 4, 2026):** AppKit measures "Efficiency %" at 61.511 pt at 10 pt, not 61.5. With the 19 layouts rebuilt from Apple's specs, 56 of the 57 widths match, but the M1 Pro with 6 Performance and 2 Efficiency cores needs 282.05 at Small, which rounds up to 283. The table had used the rounded figure. Chris corrected the table to 283 (requirements v1.8), so the code applies the rule unchanged. The design canvas holds only 7 of the layouts; the 19 are the table's 17 rows, with 10 cores split two ways (4 P + 6 E and 6 P + 4 E) and 12 cores two ways (8 P + 4 E and 6 P + 6 E).
+- **Result, Claude's checks (Nov 4, 2026):** `MeterLayout.swift` has:
+  - `MeterMetrics`, every number in design §2;
+  - the width rule, as pure functions that take each group's core count and label width;
+  - `MeterLayout`, for one size: the content size, each core's width, the top row, and each group's label frame, bars and figures, from the content's top-left corner. Positions aren't rounded to pixels; 2.2 does that;
+  - `MeterLayouts`, all three sizes, built once at launch;
+  - `measuredLabelWidth`, the one AppKit call, §6's third use.
+
+  `MeterSize` lost its base-width `contentSize`, so the snap rule always takes the real sizes. `CPUMeterApp`'s `init()` builds `MeterLayouts` from the sampler's topology, and `WindowAccess` and the placeholder use it.
+  - Compiled with a test driver under Swift 6 and the project's main-actor default, with no warnings. 18,120 checks pass:
+    - **all 57 widths match requirements §6** (v1.8), both with design §7's figures and with live AppKit measurement. One-decimal figures would give the M1 Pro 282 at Small, the old table's figure;
+    - at every layout and size: every label fits its group, every core gets at least its minimum width, the bars cover every core in order, bars are a bar gap apart and groups a group gap apart, each figure is centered under its bar, bars are 74, 134 and 195 tall, the figures end at the bottom margin and the last group at the right margin, and each size is larger than the one before;
+    - the fallback "Cores %" row at all 15 core counts, which follows FR-3b with one group, so the M4's would be 240 wide at Small; and no cores counted, which gives the base widths and no bars;
+    - the snap rule with the M4's widths: design §2's example (Small's right edge out to 380 settles at Medium), an exact tie at 303 going to Medium, and single-edge drags reaching every size;
+    - this Mac: Efficiency % 6 and Performance % 4, so 246 × 150, 360 × 225 and 480 × 300. "Performance %" has 7.9 pt spare at Small, as design §7 says;
+    - `Canvas`'s rounding: drawn by `Canvas` at scale 1.0, the tightest labels' text ends inside their groups. "Performance %" ends at 76 in the MacBook Neo's 76.33 at Small. "Efficiency %" ends at 61 in the M1 Pro's 61.75 and the M1 Pro and M1 Max's 61.60 at Small, and at 66 in their 67.00 at Medium. `Canvas` measures those labels as 77, 62 and 67, so its rounding doesn't show.
+  - Debug and Release clean builds, with no compiler warnings.
+  - The running app on the M4, with Chris's settings saved first and restored after:
+    - the window server reports 246 × 182, 360 × 257 and 480 × 332, title bar included, at Small, Medium and Large, with the top-left corner in place through every switch. A relaunch opens at the saved size;
+    - the window's limits are 246 to 480 wide;
+    - through the debugger, with a drag's end simulated: Small's right edge out to 380 settles at Medium, Medium's bottom edge down to 300 settles at Large, and Large's right edge in to 250 settles at Small, each with its top-left corner in place and the size saved.
+  - Not covered by Claude's checks: a real mouse drag, and how the placeholder looks.
+- **Result, Chris's test (Nov 5, 2026):** run from Xcode on the M4, the placeholder reads "Small · 246 × 150", "Medium · 360 × 225" and "Large · 480 × 300", with the top-left corner in place through each switch. Real mouse drags snap to the nearest size, the window can't be dragged narrower than Small or wider than Large, and Keep on Top and relaunching work as before. **Confirmed by Chris** (Nov 5, 2026). No M1 pass for 2.1; Phase 2's is in 2.3.
 
 ### Increment 2.2 — Bars on screen
 - **Goal:** The real display, live, matching the approved design. (FR-6, FR-7, FR-8d, FR-9, FR-10, FR-11, FR-14, FR-27, NFR-3, NFR-5)

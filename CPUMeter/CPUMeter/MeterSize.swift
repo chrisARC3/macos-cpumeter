@@ -25,8 +25,9 @@ nonisolated enum MeterSize: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Base content width in points (FR-3b). Increment 2.1 widens it to fit
-    /// the Mac's core count.
+    /// Base content width in points (FR-3b). The window is at least this wide,
+    /// and wider when the Mac's cores need it: `MeterLayout` works out the
+    /// real width.
     var baseWidth: CGFloat {
         switch self {
         case .small: 240
@@ -44,11 +45,6 @@ nonisolated enum MeterSize: String, CaseIterable, Identifiable {
         }
     }
 
-    /// The content area at this size, below the title bar.
-    var contentSize: CGSize {
-        CGSize(width: baseWidth, height: height)
-    }
-
     /// The size a window settles at when a resize ends (FR-3d, design §2).
     ///
     /// Whichever dimension changed more, as a share of its range from Small to
@@ -59,12 +55,11 @@ nonisolated enum MeterSize: String, CaseIterable, Identifiable {
     /// - Parameters:
     ///   - start: The content size when the resize began.
     ///   - end: The content size when it ended.
-    ///   - sizeOf: Each size's content size. Increment 2.1's widths, and
-    ///     tests, supply their own.
+    ///   - sizeOf: Each size's content size on this Mac, from `MeterLayouts`.
     static func settled(
         from start: CGSize,
         to end: CGSize,
-        sizeOf: (MeterSize) -> CGSize = { $0.contentSize }
+        sizeOf: (MeterSize) -> CGSize
     ) -> MeterSize {
         let small = sizeOf(.small)
         let large = sizeOf(.large)

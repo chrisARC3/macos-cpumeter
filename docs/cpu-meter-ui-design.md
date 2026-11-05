@@ -2,7 +2,7 @@
 
 **Date:** November 2, 2026
 **Owner:** Chris
-**Status:** Approved by Chris on Nov 2, 2026, with the percent labels in §1 added at approval. Revised Nov 4, 2026, for requirements v1.7: dragging the window snaps to the three sizes (§2), File keeps Close (§5), and the green window button zooms (§8.5). Revised again the same day for requirements v1.8: §7 gives the label widths to three decimals, which the width rule uses. The window behavior is built: by Nov 4, 2026, Phase 0 had been confirmed by Chris, including the three sizes, Keep on Top, snap resizing and the menus in §5. Phase 1, the measurement behind the bars, was confirmed the same day, including the group labels in §1 on both Mac minis. Increment 2.1 works out this page's layout numbers, and the meter itself arrives in Increment 2.2.
+**Status:** Approved by Chris on Nov 2, 2026, with the percent labels in §1 added at approval. Revised Nov 4, 2026, for requirements v1.7: dragging the window snaps to the three sizes (§2), File keeps Close (§5), and the green window button zooms (§8.5). Revised again the same day for requirements v1.8: §7 gives the label widths to three decimals, which the width rule uses. The window behavior is built: by Nov 4, 2026, Phase 0 had been confirmed by Chris, including the three sizes, Keep on Top, snap resizing and the menus in §5. Phase 1, the measurement behind the bars, was confirmed the same day, including the group labels in §1 on both Mac minis. Increment 2.1, confirmed on the M4 on Nov 5, 2026, works out this page's layout numbers, and the meter itself arrives in Increment 2.2.
 **Requirements:** [cpu-meter-requirements.md](cpu-meter-requirements.md), v1.8. If the two disagree, the requirements win.
 **Design canvas:** https://claude.ai/artifact/UHY36UTxX5jYKkNp33nCYa (private to Chris). It holds the true-size mockups; this document holds the numbers the build uses.
 
@@ -157,4 +157,4 @@ Core counts other than 8 and 10 can only be checked with simulated data.
 
 ---
 
-*Next step: Increment 2.1, layout math, of `cpu-meter-build-plan.md`, which turns §2's numbers into the window size and each bar's position. The meter itself is drawn in 2.2.*
+*Next step: Increment 2.2, bars on screen, of `cpu-meter-build-plan.md`, which draws the meter from this page with the positions 2.1 works out.*

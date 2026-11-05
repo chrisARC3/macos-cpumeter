@@ -31,13 +31,17 @@ struct WindowAccess: NSViewRepresentable {
     /// View → Size. Written back when the window settles at a new size.
     @Binding var size: MeterSize
 
+    /// Each size's content size on this Mac (FR-3b).
+    let layouts: MeterLayouts
+
     func makeNSView(context: Context) -> WindowAccessView {
-        let view = WindowAccessView()
+        let view = WindowAccessView(layouts: layouts)
         updateNSView(view, context: context)
         return view
     }
 
     func updateNSView(_ view: WindowAccessView, context: Context) {
+        view.layouts = layouts
         view.keepOnTop = keepOnTop
         view.choose(size)
         let binding = $size
@@ -64,6 +68,11 @@ final class WindowAccessView: NSView {
     /// The size the window is at, or is settling at.
     private(set) var size = MeterSize.medium
 
+    /// Each size's content size on this Mac. Worked out at launch and not
+    /// changed in Increment 2.1; Increment 4.2 changes it if the core count
+    /// does.
+    var layouts: MeterLayouts
+
     /// Saves a size the window settled at as the chosen size.
     var onSettle: ((MeterSize) -> Void)?
 
@@ -76,6 +85,16 @@ final class WindowAccessView: NSView {
 
     /// False until the window has been set to the saved size at launch.
     private var isReady = false
+
+    init(layouts: MeterLayouts) {
+        self.layouts = layouts
+        super.init(frame: .zero)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("WindowAccessView is made in code only")
+    }
 
     /// View → Size changed: the window takes the new size with its top-left
     /// corner in place (FR-22).
@@ -133,7 +152,8 @@ final class WindowAccessView: NSView {
         let pin = Pin(right: abs(end.minX - start.minX) > 0.5,
                       bottom: abs(end.maxY - start.maxY) > 0.5)
         let newSize = MeterSize.settled(from: contentSize(ofFrame: start),
-                                        to: contentSize(ofFrame: end))
+                                        to: contentSize(ofFrame: end),
+                                        sizeOf: layouts.contentSize(of:))
         settle(at: newSize, pinning: pin, animate: true)
     }
 
@@ -144,8 +164,9 @@ final class WindowAccessView: NSView {
     @objc private func windowDidResize(_ notification: Notification) {
         guard let window, isReady, !isSettingFrame, dragStartFrame == nil,
               !window.inLiveResize else { return }
-        let newSize = MeterSize.settled(from: size.contentSize,
-                                        to: contentSize(ofFrame: window.frame))
+        let newSize = MeterSize.settled(from: layouts.contentSize(of: size),
+                                        to: contentSize(ofFrame: window.frame),
+                                        sizeOf: layouts.contentSize(of:))
         settle(at: newSize, pinning: .topLeft, animate: false)
     }
 
@@ -164,7 +185,7 @@ final class WindowAccessView: NSView {
     private func setSize(_ size: MeterSize, pinning pin: Pin, animate: Bool) {
         guard let window else { return }
         let current = window.frame
-        let content = size.contentSize
+        let content = layouts.contentSize(of: size)
         var target = NSRect(x: 0, y: 0, width: content.width,
                             height: content.height + titleBarHeight(of: window))
         target.origin.x = pin.right ? current.maxX - target.width : current.minX

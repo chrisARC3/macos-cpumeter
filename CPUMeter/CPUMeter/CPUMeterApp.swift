@@ -4,8 +4,9 @@
 //
 //  The app's single window and its menus: three sizes chosen from the menu or
 //  by dragging, Keep on Top, and a remembered size, position and window level.
-//  `MeterSize.swift` holds the sizes and the snap rule, and `WindowAccess.swift`
-//  does the parts SwiftUI can't.
+//  `MeterSize.swift` holds the sizes and the snap rule, `MeterLayout.swift`
+//  works out each size's width on this Mac, and `WindowAccess.swift` does the
+//  parts SwiftUI can't.
 //
 
 import SwiftUI
@@ -34,32 +35,46 @@ struct CPUMeterApp: App {
 
     /// Samples every core on a timer (Increment 1.3). Made with the app, so
     /// the core groups are known before the window opens.
-    @State private var sampler = CPUSampler()
+    @State private var sampler: CPUSampler
+
+    /// The window's size, and the place of everything in it, at each of the
+    /// three sizes (Increment 2.1). Worked out once at launch from this Mac's
+    /// core groups, with the group labels measured by AppKit, and never stored
+    /// (FR-3b, FR-3c). Increment 4.2 works it out again if the core count
+    /// changes.
+    private let layouts: MeterLayouts
+
+    init() {
+        let sampler = CPUSampler()
+        _sampler = State(initialValue: sampler)
+        layouts = MeterLayouts(groups: sampler.topology.groups)
+    }
 
     var body: some Scene {
         // A single, unique floating window (FR-1). `Window`, not `WindowGroup`,
         // because this is a one-window app, and because closing a lone `Window`
         // scene quits the app (FR-23).
         Window(Self.windowTitle, id: "main") {
+            let content = layouts.contentSize(of: size)
             // Temporary placeholder until Increment 2.2 draws the meter. It names
             // the size so each switch is easy to check.
-            Text(verbatim: "\(size.title) · \(Int(size.contentSize.width)) × \(Int(size.contentSize.height))")
+            Text(verbatim: "\(size.title) · \(Int(content.width)) × \(Int(content.height))")
                 .foregroundStyle(.secondary)
-                .frame(width: size.contentSize.width, height: size.contentSize.height)
+                .frame(width: content.width, height: content.height)
                 // The window can be dragged anywhere from Small to Large (FR-3d).
                 // While it's between sizes, the meter keeps its size, pinned to
                 // the top-left, and the rest shows the window background (design §2).
                 .frame(
-                    minWidth: MeterSize.small.contentSize.width,
-                    maxWidth: MeterSize.large.contentSize.width,
-                    minHeight: MeterSize.small.contentSize.height,
-                    maxHeight: MeterSize.large.contentSize.height,
+                    minWidth: layouts.contentSize(of: .small).width,
+                    maxWidth: layouts.contentSize(of: .large).width,
+                    minHeight: layouts.contentSize(of: .small).height,
+                    maxHeight: layouts.contentSize(of: .large).height,
                     alignment: .topLeading
                 )
                 // Reaches the window for what SwiftUI can't do: Keep on Top's
                 // level (FR-2), settling at a size after a drag (FR-3d), and
                 // staying on screen (FR-22).
-                .background(WindowAccess(keepOnTop: keepOnTop, size: $size))
+                .background(WindowAccess(keepOnTop: keepOnTop, size: $size, layouts: layouts))
                 // Sampling runs while the window is open. Increment 4.1 also
                 // pauses it while the window can't be seen (FR-17).
                 .onAppear { sampler.start() }
