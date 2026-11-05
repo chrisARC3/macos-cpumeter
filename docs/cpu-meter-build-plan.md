@@ -1,11 +1,11 @@
 # CPUMeter — Incremental Build Plan
 
-**Version:** 1.1
-**Changelog:** v1.1 (Nov 4, 2026) — Increment 0.2's first test found two places where SwiftUI falls short, so requirements v1.7 adds direct window access and 0.2 now uses it, through the new `WindowAccess.swift`. Added Increment 0.3, snap resizing, at Chris's request. It now completes Phase 0 and takes Phase 0's M1 pass. After 0.2's second test, the scene drops `.windowLevel`, and File's Close replaces macOS's own Close group. v1.0 (Nov 2, 2026) — approved by Chris.
-**Date:** November 4, 2026
-**Companion to:** `cpu-meter-requirements.md` (v1.8) and `cpu-meter-ui-design.md`
+**Version:** 1.2
+**Changelog:** v1.2 (Nov 5, 2026) — after Increment 2.2, Chris's design changes (requirements v1.9) get their own increment, the new **2.3, design changes**. The old 2.3, other core counts, is now **2.4** and still completes Phase 2; earlier Results that point to it say 2.4. 3.2's menu lists System Color… first, and 4.2 compares the group averages too. v1.1 (Nov 4, 2026) — Increment 0.2's first test found two places where SwiftUI falls short, so requirements v1.7 adds direct window access and 0.2 now uses it, through the new `WindowAccess.swift`. Added Increment 0.3, snap resizing, at Chris's request. It now completes Phase 0 and takes Phase 0's M1 pass. After 0.2's second test, the scene drops `.windowLevel`, and File's Close replaces macOS's own Close group. v1.0 (Nov 2, 2026) — approved by Chris.
+**Date:** November 5, 2026
+**Companion to:** `cpu-meter-requirements.md` (v1.9) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Increment 2.3, other core counts, is next, after Chris and Claude discuss some minor design changes. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Chris then asked for some design changes, recorded in requirements v1.9, and Increment 2.3, design changes, is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -54,7 +54,7 @@ Use `{1..8}` for every core on the M1 and M3. To stop any of them:
 pkill -x awk; pkill -x yes
 ```
 
-The "Efficiency cores only" load is what proves the group labels are right. A background-priority process stays on the Efficiency cores, so only the bars labeled "Efficiency %" should rise. If the other group rises, the labels are swapped.
+The "Efficiency cores only" load is what proves the group labels are right. A background-priority process stays on the Efficiency cores, so only the bars in the Efficiency group should rise, and from Increment 2.3, that group's average with them. If the other group rises, the labels are swapped.
 
 ---
 
@@ -82,7 +82,7 @@ The "Efficiency cores only" load is what proves the group labels are right. A ba
 | `CPUSampler.swift` | Timer, baseline, percentages, pause and resume | 1.3 |
 | `MeterLayout.swift` | The width rule and the design document's numbers | 2.1 |
 | `MeterView.swift` | The `Canvas` drawing | 2.2 |
-| `SimulatedCores.swift` | Other core counts, Debug builds only | 2.3 |
+| `SimulatedCores.swift` | Other core counts, Debug builds only | 2.4 |
 | `BarColors.swift` | Chosen colors and the system color chooser | 3.2 |
 | `Assets.xcassets/AppIcon` | App icon, from Chris's artwork | 5.1 |
 | `design/AllIcons.jpeg` | Chris's original icon sheet, which the AppIcon images are cut from | 5.1 |
@@ -279,7 +279,7 @@ The window comes first because it holds the biggest unknowns. The requirements a
     - the window's limits are 246 to 480 wide;
     - through the debugger, with a drag's end simulated: Small's right edge out to 380 settles at Medium, Medium's bottom edge down to 300 settles at Large, and Large's right edge in to 250 settles at Small, each with its top-left corner in place and the size saved.
   - Not covered by Claude's checks: a real mouse drag, and how the placeholder looks.
-- **Result, Chris's test (Nov 5, 2026):** run from Xcode on the M4, the placeholder reads "Small · 246 × 150", "Medium · 360 × 225" and "Large · 480 × 300", with the top-left corner in place through each switch. Real mouse drags snap to the nearest size, the window can't be dragged narrower than Small or wider than Large, and Keep on Top and relaunching work as before. **Confirmed by Chris** (Nov 5, 2026). No M1 pass for 2.1; Phase 2's is in 2.3.
+- **Result, Chris's test (Nov 5, 2026):** run from Xcode on the M4, the placeholder reads "Small · 246 × 150", "Medium · 360 × 225" and "Large · 480 × 300", with the top-left corner in place through each switch. Real mouse drags snap to the nearest size, the window can't be dragged narrower than Small or wider than Large, and Keep on Top and relaunching work as before. **Confirmed by Chris** (Nov 5, 2026). No M1 pass for 2.1; Phase 2's is in 2.4.
 
 ### Increment 2.2 — Bars on screen
 - **Goal:** The real display, live, matching the approved design. (FR-6, FR-7, FR-8d, FR-9, FR-10, FR-11, FR-14, FR-27, NFR-3, NFR-5)
@@ -318,12 +318,33 @@ The window comes first because it holds the biggest unknowns. The requirements a
   - the system-time load grows the orange part of a bar and the user-time load the blue part;
   - under the every-core load, the figures are readable.
 
-  **Confirmed by Chris** (Nov 5, 2026). No M1 pass for 2.2; Phase 2's is in 2.3. Before 2.3, Chris wants to discuss some minor design changes.
+  **Confirmed by Chris** (Nov 5, 2026). No M1 pass for 2.2; Phase 2's is in 2.4. Chris then asked for some design changes, which became 2.3.
 
-### Increment 2.3 — Other core counts
-- **Goal:** See every Mac in the requirements' table, drawn by the real code. (FR-3b, FR-8a, FR-8c, FR-11)
+### Increment 2.3 — Design changes
+- **Goal:** The meter matches Chris's changes after 2.2, in requirements v1.9 and the UI design's Nov 5 revision: system time at the bottom of each bar, System first in the key, each group's average in its label, "Perf" only where "Performance" would widen the window, and no label on the fallback row. (FR-3b, FR-8a, FR-8c, FR-8d, FR-8e, FR-9, FR-11, FR-27, NFR-3)
+- **Build:**
+  - `CPUSampler.swift`: each sample also holds each group's average, from that group's raw ticks, as the overall figure is calculated.
+  - `MeterLayout.swift`: labels measured at their widest ("Efficiency 100%", in monospaced digits); "Perf" at a size where "Performance" would make the window wider; on the fallback row, no label and taller bars (89, 152 and 215).
+  - `MeterView.swift`: the system part at the bottom and the user part above it, with the gap coming out of the user part; the key reading System, then User; each label drawn with its average, or a dash before the first reading.
+  - `CoreTopology.swift` and `CPUMeterApp.swift`, only as far as the label text and the fallback need.
+- **Verify:** Headless, on the real files:
+  - all 57 widths match requirements §6 v1.9, with live measurement, and "Perf" appears in exactly the two places FR-8e names;
+  - at every layout and size, every label at its widest fits within its group, and on the fallback row the taller bars end where the other rows' bars do;
+  - the group averages from raw ticks, including uneven groups;
+  - the bar parts at every reading in steps of 0.25%, with system time at the base;
+  - renders at scale 1.0 in Dark and Light at all three sizes: no reading yet, mixed readings, full load and the fallback row.
+
+  Then Chris runs it on the M4 from Xcode, at all three sizes, in Dark and Light:
+  - the system-time load grows the orange base of a bar and the user-time load the blue part above it;
+  - the labels read "Efficiency nn%" and "Perf nn%" at Small, and "Performance nn%" at Medium and Large;
+  - the Efficiency-cores-only load raises the Efficiency average and not the other;
+  - under the every-core load, the labels read 100% and every figure is readable.
+- **Done when:** Chris confirms the window matches the revised design on the M4. No M1 pass; Phase 2's is in 2.4.
+
+### Increment 2.4 — Other core counts
+- **Goal:** See every Mac in the requirements' table, drawn by the real code. (FR-3b, FR-8a, FR-8c, FR-8e, FR-11)
 - **Build:** `SimulatedCores.swift`, compiled only in Debug builds: a launch argument such as `-simulateCores Performance:24,Super:12` replaces the detected groups and feeds them synthetic ticks.
-- **Verify:** Claude renders all 19 core layouts at all three sizes as a contact sheet and inspects it for overlaps, clipping and figures running together. Chris spot-checks 36 cores, the fallback row and the MacBook Neo in the real window. A check of the Release binary confirms the simulation code isn't in it.
+- **Verify:** Claude renders all 19 core layouts at all three sizes as a contact sheet and inspects it for overlaps, clipping and figures running together. Chris spot-checks 36 cores, the fallback row and the MacBook Neo, with its "Perf" at Small, in the real window. A check of the Release binary confirms the simulation code isn't in it.
 - **Done when:** Every configuration is clean, and Release has no simulation code. **Completes Phase 2**, including the M1 pass. This is the limit of what can be tested above 10 cores, and the README will say so.
 
 ---
@@ -338,7 +359,7 @@ The window comes first because it holds the biggest unknowns. The requirements a
 
 ### Increment 3.2 — Colors
 - **Goal:** Both colors can be changed with the system chooser. (FR-24, FR-28, FR-28a, FR-28b, FR-28c, FR-28d, FR-28e, NFR-5)
-- **Build:** `BarColors.swift` and **View → Colors**: User Color…, System Color… and Reset to Defaults. `NSColorPanel` opens set to the current color and titled with which one is changing, with its opacity control hidden. Chosen colors are stored as sRGB values. With none stored, the adaptive system colors apply.
+- **Build:** `BarColors.swift` and **View → Colors**: System Color…, User Color… and Reset to Defaults, in the key's order. `NSColorPanel` opens set to the current color and titled with which one is changing, with its opacity control hidden. Chosen colors are stored as sRGB values. With none stored, the adaptive system colors apply.
 - **Risk:** With Keep on Top on, the chooser could open behind CPUMeter, or the app might not quit with the chooser open. Both are checked explicitly. Also, File → Close (from 0.2) closes the meter's window by name, so ⌘W with the chooser in front may quit the app instead of closing the chooser. Check it here, and fix it if so.
 - **Verify:** Chris's checklist:
   - The bars and key change as a color is picked, between refreshes.
@@ -365,8 +386,8 @@ The window comes first because it holds the biggest unknowns. The requirements a
 
 ### Increment 4.2 — Failures, sleep and needless redraws
 - **Goal:** It stays sensible when things go wrong, and doesn't redraw when nothing changed. (FR-8c, NFR-1, NFR-4)
-- **Build:** The sampler publishes only when a displayed value changes, compared at whole percentages for each core's user and system time and for the overall figure. A failed read keeps the zero state. A changed core count primes the baseline again and recalculates the width.
-- **Verify:** Headless: a failed read, zero ticks, a core count that changes between reads, identical samples that publish nothing, and a core-type mismatch reaching the "Cores %" row. Chris: put the whole Mac to sleep, wake it, and confirm no false spike.
+- **Build:** The sampler publishes only when a displayed value changes, compared at whole percentages for each core's user and system time, each group's average and the overall figure. A failed read keeps the zero state. A changed core count primes the baseline again and recalculates the width.
+- **Verify:** Headless: a failed read, zero ticks, a core count that changes between reads, identical samples that publish nothing, and a core-type mismatch reaching the unlabeled fallback row. Chris: put the whole Mac to sleep, wake it, and confirm no false spike.
 - **Done when:** All pass with no crash. **Completes Phase 4**, including the M1 pass.
 
 ---
@@ -424,7 +445,7 @@ The window comes first because it holds the biggest unknowns. The requirements a
 | FR-1 | 0.1 |
 | FR-2 | 0.2 |
 | FR-3, FR-3a | 0.2, 0.3 |
-| FR-3b | 2.1, 2.3 |
+| FR-3b | 2.1, 2.3, 2.4 |
 | FR-3c | 2.1 |
 | FR-3d | 0.3 |
 | FR-4 | 0.1 |
@@ -432,12 +453,14 @@ The window comes first because it holds the biggest unknowns. The requirements a
 | FR-6 | 1.2, 2.2 |
 | FR-7 | 2.2 |
 | FR-8 | 1.2 |
-| FR-8a | 1.2, 2.3 |
+| FR-8a | 1.2, 2.3, 2.4 |
 | FR-8b | 1.2, 1.3 |
-| FR-8c | 1.2, 2.3, 4.2 |
-| FR-8d | 2.1, 2.2 |
-| FR-9, FR-10 | 1.3, 2.2 |
-| FR-11 | 2.1, 2.2, 2.3 |
+| FR-8c | 1.2, 2.3, 2.4, 4.2 |
+| FR-8d | 2.1, 2.2, 2.3 |
+| FR-8e | 2.3, 2.4 |
+| FR-9 | 1.3, 2.2, 2.3 |
+| FR-10 | 1.3, 2.2 |
+| FR-11 | 2.1, 2.2, 2.3, 2.4 |
 | FR-12 | 1.3 |
 | FR-13 | 1.1 |
 | FR-14 | 1.3, 2.2 |
@@ -451,11 +474,11 @@ The window comes first because it holds the biggest unknowns. The requirements a
 | FR-23 | 0.1 |
 | FR-24 | 0.2, 3.1, 3.2 |
 | FR-25, FR-26 | 0.2 |
-| FR-27 | 2.2 |
+| FR-27 | 2.2, 2.3 |
 | FR-28, FR-28a–e | 3.2 |
 | NFR-1 | 1.1, 4.2, 5.2 |
 | NFR-2 | 1.1 *(pre-verified Nov 1)* |
-| NFR-3 | 2.2 |
+| NFR-3 | 2.2, 2.3 |
 | NFR-4 | 4.1, 4.2 |
 | NFR-5 | 2.2, 3.2 |
 | NFR-6 | 1.3, 5.3 |
