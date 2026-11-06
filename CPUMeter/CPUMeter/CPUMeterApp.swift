@@ -82,12 +82,14 @@ struct CPUMeterApp: App {
                     alignment: .topLeading
                 )
                 // Reaches the window for what SwiftUI can't do: Keep on Top's
-                // level (FR-2), settling at a size after a drag (FR-3d), and
-                // staying on screen (FR-22).
-                .background(WindowAccess(keepOnTop: keepOnTop, size: $size, layouts: layouts))
-                // Sampling runs while the window is open, at the chosen rate,
-                // and a new rate takes effect at once (FR-18d). Increment 4.1
-                // also pauses it while the window can't be seen (FR-17).
+                // level (FR-2), settling at a size after a drag (FR-3d),
+                // staying on screen (FR-22), and pausing sampling while the
+                // window can't be seen (FR-17).
+                .background(WindowAccess(keepOnTop: keepOnTop, size: $size, layouts: layouts,
+                                         onVisibilityChange: { sampler.setVisible($0) }))
+                // Sampling runs while the window is open and can be seen, at
+                // the chosen rate, and a new rate takes effect at once
+                // (FR-18d).
                 .onAppear {
                     sampler.setRate(refreshRate)
                     sampler.start()

@@ -4,8 +4,9 @@
 //
 //  Samples every core on a timer and works out the percentages the meter
 //  shows (FR-8d, FR-9, FR-10, FR-12, FR-14, FR-15). Increment 1.3; each
-//  group's average since Increment 2.3, and the five refresh rates since
-//  Increment 3.2. The arithmetic is kept in pure functions, so it can be
+//  group's average since Increment 2.3, the five refresh rates since
+//  Increment 3.2, and pausing while the window can't be seen since
+//  Increment 4.1. The arithmetic is kept in pure functions, so it can be
 //  checked without a timer. In Debug builds, `SimulatedCores.swift` can
 //  stand in for the Mac's cores (Increment 2.4).
 //
@@ -92,6 +93,15 @@ final class CPUSampler {
     /// (FR-18b).
     @ObservationIgnored private(set) var rate: RefreshRate = .oneSecond
 
+    /// True between `start()` and `stop()`: the window is open and wants
+    /// updates.
+    @ObservationIgnored private var isStarted = false
+
+    /// Whether any part of the window can be seen, as macOS last reported
+    /// (FR-17). Assumed true until macOS says otherwise, so a missed report
+    /// can't leave the meter stopped.
+    @ObservationIgnored private(set) var isVisible = true
+
     #if DEBUG
     /// Other cores in place of the Mac's own, when the launch arguments ask
     /// for them (Increment 2.4). Debug builds only.
@@ -111,18 +121,45 @@ final class CPUSampler {
 
     // MARK: Lifecycle
 
-    /// Starts sampling at the current rate. The baseline is read first, so the
-    /// first update is a real measurement rather than a spike measured from
-    /// zero (FR-14). Safe to call again: it restarts the timer and reads a new
-    /// baseline.
+    /// Starts sampling at the current rate, if the window can be seen. The
+    /// baseline is read first, so the first update is a real measurement
+    /// rather than a spike measured from zero (FR-14). Safe to call again: it
+    /// restarts the timer and reads a new baseline.
     func start() {
-        stop()
-        setBaseline(readCounters())
-        runTimer(firstUpdateAfter: rate.interval, exact: false)
+        isStarted = true
+        guard isVisible else { return }
+        begin(firstUpdateAfter: rate.interval, exact: false)
     }
 
-    /// Stops sampling.
+    /// Stops sampling: the window closed.
     func stop() {
+        isStarted = false
+        stopTimer()
+    }
+
+    /// The window can now be seen, or can't (FR-17). Hidden, the timer stops,
+    /// so nothing is read or drawn. Seen again, a new baseline is read at
+    /// once, so the next update covers only the time it can be seen. That
+    /// update comes after `shortestReading`, exactly, and later ones at the
+    /// rate. A rate chosen while hidden takes effect then.
+    func setVisible(_ visible: Bool) {
+        guard visible != isVisible else { return }
+        isVisible = visible
+        guard isStarted else { return }
+        if visible {
+            begin(firstUpdateAfter: Self.shortestReading, exact: true)
+        } else {
+            stopTimer()
+        }
+    }
+
+    /// Reads a new baseline and runs the timer from it.
+    private func begin(firstUpdateAfter delay: TimeInterval, exact: Bool) {
+        setBaseline(readCounters())
+        runTimer(firstUpdateAfter: delay, exact: exact)
+    }
+
+    private func stopTimer() {
         timer?.invalidate()
         timer = nil
     }
@@ -132,7 +169,8 @@ final class CPUSampler {
     /// passed since it, and then at the new rate. Until then it keeps its last
     /// update. The baseline isn't read again, and another change doesn't delay
     /// the update, because the wait is always timed from the last update.
-    /// When not sampling, the next `start()` uses the new rate.
+    /// When not sampling, because the window is closed or hidden, the next
+    /// `start()` or `setVisible(true)` uses the new rate.
     func setRate(_ newRate: RefreshRate) {
         guard newRate != rate else { return }
         rate = newRate

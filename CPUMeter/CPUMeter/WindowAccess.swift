@@ -4,8 +4,9 @@
 //
 //  The one place CPUMeter reaches the window SwiftUI creates: requirements §6,
 //  the fourth use of AppKit, added in v1.7. The window level for Keep on Top
-//  and staying on screen (Increment 0.2), and settling at one of the three
-//  sizes after a drag or any other resize (Increment 0.3).
+//  and staying on screen (Increment 0.2), settling at one of the three
+//  sizes after a drag or any other resize (Increment 0.3), and passing on
+//  macOS's notice of whether the window can be seen (Increment 4.1).
 //
 
 import SwiftUI
@@ -18,7 +19,9 @@ import AppKit
 ///   ends, and saves that size (FR-3d);
 /// - sets the window's size when View → Size changes, with its top-left corner
 ///   in place;
-/// - keeps the window on screen after any of these (FR-22).
+/// - keeps the window on screen after any of these (FR-22);
+/// - says when the window can or can't be seen, so sampling pauses while it
+///   can't (FR-17).
 ///
 /// SwiftUI's `.windowLevel(.floating)` gave level 19 rather than AppKit's
 /// floating level 3, and kept setting it again on scene updates, so the scene
@@ -34,6 +37,11 @@ struct WindowAccess: NSViewRepresentable {
     /// Each size's content size on this Mac (FR-3b).
     let layouts: MeterLayouts
 
+    /// Called with true when any part of the window can be seen again, and
+    /// false when none of it can: minimized, fully covered, the app hidden,
+    /// or the display asleep (FR-17).
+    let onVisibilityChange: (Bool) -> Void
+
     func makeNSView(context: Context) -> WindowAccessView {
         let view = WindowAccessView(layouts: layouts)
         updateNSView(view, context: context)
@@ -46,6 +54,7 @@ struct WindowAccess: NSViewRepresentable {
         view.choose(size)
         let binding = $size
         view.onSettle = { binding.wrappedValue = $0 }
+        view.onVisibilityChange = onVisibilityChange
     }
 }
 
@@ -75,6 +84,10 @@ final class WindowAccessView: NSView {
 
     /// Saves a size the window settled at as the chosen size.
     var onSettle: ((MeterSize) -> Void)?
+
+    /// Passes on whether the window can be seen, each time macOS says it
+    /// changed (FR-17).
+    var onVisibilityChange: ((Bool) -> Void)?
 
     /// The window's frame when a drag began, or nil when no drag is under way.
     private var dragStartFrame: NSRect?
@@ -118,6 +131,11 @@ final class WindowAccessView: NSView {
                            name: NSWindow.willStartLiveResizeNotification, object: window)
         center.addObserver(self, selector: #selector(windowDidEndLiveResize(_:)),
                            name: NSWindow.didEndLiveResizeNotification, object: window)
+        // The window's state isn't read here: until it's first ordered on
+        // screen, macOS reports it as not visible. The sampler assumes it can
+        // be seen until the first notice says otherwise.
+        center.addObserver(self, selector: #selector(windowDidChangeOcclusionState(_:)),
+                           name: NSWindow.didChangeOcclusionStateNotification, object: window)
 
         // At launch the saved size wins over the size of the restored frame,
         // which supplies only the position (FR-19, FR-20). This waits one turn
@@ -135,6 +153,15 @@ final class WindowAccessView: NSView {
     /// that others can cover when it's off (FR-2).
     private func applyLevel() {
         window?.level = keepOnTop ? .floating : .normal
+    }
+
+    /// macOS says whether any part of the window can be seen changed: it was
+    /// minimized or restored, fully covered or uncovered, the app was hidden
+    /// or shown, or the display slept or woke (FR-17). A window only partly
+    /// covered still counts as seen.
+    @objc private func windowDidChangeOcclusionState(_ notification: Notification) {
+        guard let window else { return }
+        onVisibilityChange?(window.occlusionState.contains(.visible))
     }
 
     @objc private func windowWillStartLiveResize(_ notification: Notification) {

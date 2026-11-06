@@ -162,4 +162,4 @@ Core counts other than 8 and 10 can only be checked with simulated data. Increme
 
 ---
 
-*Next step: Increment 4.1, Pause when not visible, of `cpu-meter-build-plan.md`, which starts Phase 4. Increment 3.4 gave §5's View menu its new shortcuts and was confirmed on the M4 on Nov 6, 2026.*
+*Next step: Increment 4.2, Failures, sleep and needless redraws, of `cpu-meter-build-plan.md`, which completes Phase 4. Increment 4.1 paused sampling while the meter can't be seen, with no change to this page, and was confirmed on the M4 on Nov 6, 2026.*
