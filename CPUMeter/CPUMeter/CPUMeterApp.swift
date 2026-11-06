@@ -3,8 +3,9 @@
 //  CPUMeter
 //
 //  The app's single window and its menus: three sizes chosen from the menu,
-//  with ⌘1–⌘3 or by dragging, five refresh rates, the two bar colors, and
-//  Keep on Top, each remembered across launches, as is the window's position.
+//  with ⇧⌘S, ⇧⌘M and ⇧⌘L or by dragging, five refresh rates chosen from the
+//  menu or with ⌘1–⌘5, the two bar colors, and Keep on Top, each remembered
+//  across launches, as is the window's position.
 //  `MeterSize.swift` holds the sizes and the snap rule, `MeterLayout.swift`
 //  works out each size's width on this Mac, `MeterView.swift` draws the meter,
 //  `BarColors.swift` holds the colors and opens the color chooser, and
@@ -135,20 +136,22 @@ struct CPUMeterApp: App {
             // removes Show Toolbar and Customize Toolbar, which don't apply
             // (FR-25).
             CommandGroup(replacing: .toolbar) {
-                // ⌘1, ⌘2 and ⌘3 choose a size just as the menu does, so the
-                // window keeps its top-left corner and stays on screen
-                // (FR-22, FR-24a, Increment 3.1). The menu shows them.
+                // ⇧⌘S, ⇧⌘M and ⇧⌘L choose a size just as the menu does, so
+                // the window keeps its top-left corner and stays on screen
+                // (FR-22, FR-24a, Increment 3.4). The menu shows them.
                 Picker("Size", selection: $size) {
                     ForEach(MeterSize.allCases) { option in
                         Text(option.title).tag(option)
-                            .keyboardShortcut(option.shortcutKey)
+                            .keyboardShortcut(option.shortcutKey, modifiers: [.command, .shift])
                     }
                 }
-                // 1 to 5 seconds, with no shortcuts (FR-18, requirements §8
-                // item 10).
+                // 1 to 5 seconds. ⌘1 to ⌘5 choose a rate just as the menu does,
+                // so it takes effect as FR-18d says (FR-18e, Increment 3.4).
+                // The menu shows them.
                 Picker("Refresh Rate", selection: $refreshRate) {
                     ForEach(RefreshRate.allCases) { option in
                         Text(option.title).tag(option)
+                            .keyboardShortcut(option.shortcutKey)
                     }
                 }
                 // System Color… and User Color… in the key's order, each
@@ -183,14 +186,22 @@ private struct LiveMeter: View {
 }
 
 private extension MeterSize {
-    /// The size's keyboard shortcut in View → Size, used with ⌘ (FR-24a):
-    /// ⌘1, ⌘2 and ⌘3 from smallest to largest, as Finder's View menu numbers
-    /// its views.
+    /// The size's keyboard shortcut in View → Size, used with ⇧⌘ (FR-24a):
+    /// its first letter. Shift is needed because ⌘M alone is Window →
+    /// Minimize, and all three take it so they match.
     var shortcutKey: KeyEquivalent {
         switch self {
-        case .small: "1"
-        case .medium: "2"
-        case .large: "3"
+        case .small: "s"
+        case .medium: "m"
+        case .large: "l"
         }
+    }
+}
+
+private extension RefreshRate {
+    /// The rate's keyboard shortcut in View → Refresh Rate, used with ⌘
+    /// (FR-18e): its number of seconds, ⌘1 to ⌘5.
+    var shortcutKey: KeyEquivalent {
+        KeyEquivalent(Character(String(rawValue)))
     }
 }
