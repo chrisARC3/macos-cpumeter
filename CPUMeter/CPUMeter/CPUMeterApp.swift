@@ -3,7 +3,8 @@
 //  CPUMeter
 //
 //  The app's single window and its menus: three sizes chosen from the menu,
-//  with ⌘1–⌘3 or by dragging, Keep on Top, and a remembered size, position and window level.
+//  with ⌘1–⌘3 or by dragging, five refresh rates, and Keep on Top, each
+//  remembered across launches, as is the window's position.
 //  `MeterSize.swift` holds the sizes and the snap rule, `MeterLayout.swift`
 //  works out each size's width on this Mac, `MeterView.swift` draws the meter,
 //  and `WindowAccess.swift` does the parts SwiftUI can't.
@@ -26,6 +27,10 @@ struct CPUMeterApp: App {
     /// View → Size, or the size a drag settled at, remembered across launches
     /// (FR-20). Medium at first launch (FR-21).
     @AppStorage("meterSize") private var size: MeterSize = .medium
+
+    /// View → Refresh Rate, remembered across launches (FR-18c). 1 second at
+    /// first launch (FR-18a).
+    @AppStorage("refreshRate") private var refreshRate: RefreshRate = .oneSecond
 
     /// View → Keep on Top, on at first launch and remembered across launches (FR-2).
     @AppStorage("keepOnTop") private var keepOnTop = true
@@ -73,10 +78,15 @@ struct CPUMeterApp: App {
                 // level (FR-2), settling at a size after a drag (FR-3d), and
                 // staying on screen (FR-22).
                 .background(WindowAccess(keepOnTop: keepOnTop, size: $size, layouts: layouts))
-                // Sampling runs while the window is open. Increment 4.1 also
-                // pauses it while the window can't be seen (FR-17).
-                .onAppear { sampler.start() }
+                // Sampling runs while the window is open, at the chosen rate,
+                // and a new rate takes effect at once (FR-18d). Increment 4.1
+                // also pauses it while the window can't be seen (FR-17).
+                .onAppear {
+                    sampler.setRate(refreshRate)
+                    sampler.start()
+                }
                 .onDisappear { sampler.stop() }
+                .onChange(of: refreshRate) { _, rate in sampler.setRate(rate) }
                 // Full screen is off, so the green button zooms to Large and
                 // back (requirements §8, item 21).
                 .windowFullScreenBehavior(.disabled)
@@ -104,7 +114,7 @@ struct CPUMeterApp: App {
 
             // The View menu (FR-24, design §5). Replacing the toolbar group also
             // removes Show Toolbar and Customize Toolbar, which don't apply
-            // (FR-25). Refresh Rate (3.2) and Colors (3.3) go above the divider.
+            // (FR-25). Colors (3.3) goes above the divider, after Refresh Rate.
             CommandGroup(replacing: .toolbar) {
                 // ⌘1, ⌘2 and ⌘3 choose a size just as the menu does, so the
                 // window keeps its top-left corner and stays on screen
@@ -113,6 +123,13 @@ struct CPUMeterApp: App {
                     ForEach(MeterSize.allCases) { option in
                         Text(option.title).tag(option)
                             .keyboardShortcut(option.shortcutKey)
+                    }
+                }
+                // 1 to 5 seconds, with no shortcuts (FR-18, requirements §8
+                // item 10).
+                Picker("Refresh Rate", selection: $refreshRate) {
+                    ForEach(RefreshRate.allCases) { option in
+                        Text(option.title).tag(option)
                     }
                 }
                 Divider()

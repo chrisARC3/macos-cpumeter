@@ -4,13 +4,30 @@
 //
 //  Samples every core on a timer and works out the percentages the meter
 //  shows (FR-8d, FR-9, FR-10, FR-12, FR-14, FR-15). Increment 1.3; each
-//  group's average since Increment 2.3. The arithmetic is kept in pure
-//  functions, so it can be checked without a timer. In Debug builds,
-//  `SimulatedCores.swift` can stand in for the Mac's cores (Increment 2.4).
+//  group's average since Increment 2.3, and the five refresh rates since
+//  Increment 3.2. The arithmetic is kept in pure functions, so it can be
+//  checked without a timer. In Debug builds, `SimulatedCores.swift` can
+//  stand in for the Mac's cores (Increment 2.4).
 //
 
 import Foundation
 import Observation
+
+/// How often the meter updates, chosen from View → Refresh Rate (FR-18).
+/// Saved as its number of seconds. A saved number that isn't one of these
+/// gives the default, 1 second (FR-18a).
+nonisolated enum RefreshRate: Int, CaseIterable, Identifiable, Sendable {
+    case oneSecond = 1, twoSeconds, threeSeconds, fourSeconds, fiveSeconds
+
+    var id: Self { self }
+
+    /// Seconds between updates.
+    var interval: TimeInterval { TimeInterval(rawValue) }
+
+    /// The name shown in View → Refresh Rate, such as "1 second" or
+    /// "5 seconds" (design §5).
+    var title: String { rawValue == 1 ? "1 second" : "\(rawValue) seconds" }
+}
 
 /// A share of CPU time over one interval, for one core, a group or all cores.
 /// Each part runs from 0 to 1, and the rest of the time was idle.
@@ -66,8 +83,14 @@ final class CPUSampler {
     /// The previous read, which the next one is measured from.
     @ObservationIgnored private var baseline: [CoreTicks]?
 
-    /// Seconds between updates. View → Refresh Rate (3.2) makes it a setting.
-    @ObservationIgnored private let interval: TimeInterval = 1
+    /// When the baseline was read, in seconds of the Mac's uptime, a clock
+    /// that doesn't jump when the time of day is set. A rate change times its
+    /// update from it (FR-18d).
+    @ObservationIgnored private var baselineTime: TimeInterval = 0
+
+    /// How often it updates. It stays fixed until the user changes it
+    /// (FR-18b).
+    @ObservationIgnored private(set) var rate: RefreshRate = .oneSecond
 
     #if DEBUG
     /// Other cores in place of the Mac's own, when the launch arguments ask
@@ -88,30 +111,78 @@ final class CPUSampler {
 
     // MARK: Lifecycle
 
-    /// Starts sampling. The baseline is read first, so the first update is a
-    /// real measurement rather than a spike measured from zero (FR-14). Safe
-    /// to call again: it restarts the timer and reads a new baseline.
+    /// Starts sampling at the current rate. The baseline is read first, so the
+    /// first update is a real measurement rather than a spike measured from
+    /// zero (FR-14). Safe to call again: it restarts the timer and reads a new
+    /// baseline.
     func start() {
         stop()
-        baseline = readCounters()
-
-        let timer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
-            // The timer is on the main run loop, so this runs on the main
-            // actor already.
-            MainActor.assumeIsolated { self?.tick() }
-        }
-        // Lets macOS combine wakeups (NFR-1).
-        timer.tolerance = interval * 0.1
-        // The common modes include the one macOS uses while a menu is open,
-        // so the meter keeps updating then too.
-        RunLoop.main.add(timer, forMode: .common)
-        self.timer = timer
+        setBaseline(readCounters())
+        runTimer(firstUpdateAfter: rate.interval, exact: false)
     }
 
     /// Stops sampling.
     func stop() {
         timer?.invalidate()
         timer = nil
+    }
+
+    /// Changes the refresh rate (FR-18d). While sampling, the meter updates
+    /// at once, measured from its last update, or when a full second has
+    /// passed since it, and then at the new rate. Until then it keeps its last
+    /// update. The baseline isn't read again, and another change doesn't delay
+    /// the update, because the wait is always timed from the last update.
+    /// When not sampling, the next `start()` uses the new rate.
+    func setRate(_ newRate: RefreshRate) {
+        guard newRate != rate else { return }
+        rate = newRate
+        guard timer != nil else { return }
+        let sinceBaseline = ProcessInfo.processInfo.systemUptime - baselineTime
+        runTimer(firstUpdateAfter: Self.waitAfterRateChange(sinceLastRead: sinceBaseline), exact: true)
+    }
+
+    /// The shortest time a reading can cover: the shortest refresh rate.
+    /// That's about 100 ticks per core, so a figure can't come from a handful
+    /// of ticks (FR-18d).
+    nonisolated static let shortestReading = RefreshRate.oneSecond.interval
+
+    /// How long after a rate change the meter updates (FR-18d): at once when
+    /// the last read was at least `shortestReading` ago, otherwise when that
+    /// time is up. Never more than `shortestReading`.
+    nonisolated static func waitAfterRateChange(sinceLastRead elapsed: TimeInterval) -> TimeInterval {
+        min(max(shortestReading - elapsed, 0), shortestReading)
+    }
+
+    /// Replaces the timer: the first update after `delay`, then one every
+    /// interval at the current rate.
+    ///
+    /// - Parameter exact: Whether the first update comes exactly on time. A
+    ///   rate change's update does, so it's never later than promised
+    ///   (FR-18d). Every other update may come up to a tenth of the interval
+    ///   late, which lets macOS combine wakeups (NFR-1).
+    private func runTimer(firstUpdateAfter delay: TimeInterval, exact: Bool) {
+        timer?.invalidate()
+        let interval = rate.interval
+        let leeway = interval * 0.1
+        let timer = Timer(fire: Date(timeIntervalSinceNow: delay), interval: interval, repeats: true) { [weak self] firing in
+            // The timer is on the main run loop, so this runs on the main
+            // actor already.
+            MainActor.assumeIsolated { self?.tick() }
+            // Only the first update is exact.
+            firing.tolerance = leeway
+        }
+        timer.tolerance = exact ? 0 : leeway
+        // The common modes include the one macOS uses while a menu is open,
+        // so the meter keeps updating then too.
+        RunLoop.main.add(timer, forMode: .common)
+        self.timer = timer
+    }
+
+    /// Makes `ticks` the read the next update is measured from, and notes
+    /// when it was taken.
+    private func setBaseline(_ ticks: [CoreTicks]?) {
+        baseline = ticks
+        baselineTime = ProcessInfo.processInfo.systemUptime
     }
 
     // MARK: Sampling
@@ -128,7 +199,7 @@ final class CPUSampler {
         // Reads with different core counts give no changes. The newer read
         // becomes the baseline, so the next tick measures again.
         let changes = baseline.flatMap { CoreCounters.changes(from: $0, to: current) }
-        baseline = current
+        setBaseline(current)
         let groups = topology.groups
         sample = changes.map { Self.sample(from: $0, groups: groups) }
     }
