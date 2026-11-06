@@ -162,4 +162,4 @@ Core counts other than 8 and 10 can only be checked with simulated data. Increme
 
 ---
 
-*Next step: Increment 4.2, Failures, sleep and needless redraws, of `cpu-meter-build-plan.md`, which completes Phase 4. Increment 4.1 paused sampling while the meter can't be seen, with no change to this page, and was confirmed on the M4 on Nov 6, 2026.*
+*Next step: Increment 5.2, Footprint, of `cpu-meter-build-plan.md`, after both Macs move to macOS 27.2 with a short recheck. Increment 4.2 kept the meter sensible through failed reads, sleep and a changed core count, showing dashes for one update and taking the new width at the same size, with no change to this page. It was confirmed on the M4 and the M1 on Nov 6, 2026, completing Phase 4.*

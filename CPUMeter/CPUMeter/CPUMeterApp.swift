@@ -49,18 +49,17 @@ struct CPUMeterApp: App {
     @State private var barColors = BarColors()
 
     /// The window's size, and the place of everything in it, at each of the
-    /// three sizes (Increment 2.1). Worked out once at launch from this Mac's
-    /// core groups, with the group labels measured by AppKit, and never stored
-    /// (FR-3b, FR-3c). Increment 4.2 works it out again if the core count
-    /// changes.
-    private let layouts: MeterLayouts
+    /// three sizes (Increment 2.1). Worked out at launch from this Mac's core
+    /// groups, with the group labels measured by AppKit, and never stored
+    /// (FR-3b, FR-3c). Worked out again if the sampler reads new core groups
+    /// because the core count changed (NFR-4, Increment 4.2).
+    @State private var layouts: MeterLayouts
 
     init() {
         let sampler = CPUSampler()
         _sampler = State(initialValue: sampler)
         // The fallback row has no label (FR-8c, Increment 2.3).
-        layouts = MeterLayouts(groups: sampler.topology.groups,
-                               labeled: sampler.topology.fallbackReason == nil)
+        _layouts = State(initialValue: MeterLayouts(topology: sampler.topology))
     }
 
     var body: some Scene {
@@ -101,6 +100,11 @@ struct CPUMeterApp: App {
                     barColors.closeChooser()
                 }
                 .onChange(of: refreshRate) { _, rate in sampler.setRate(rate) }
+                // New core groups, after the core count changed, give new
+                // widths; the window follows them (NFR-4, FR-3b).
+                .onChange(of: sampler.topology) { _, topology in
+                    layouts = MeterLayouts(topology: topology)
+                }
                 // Full screen is off, so the green button zooms to Large and
                 // back (requirements §8, item 21).
                 .windowFullScreenBehavior(.disabled)

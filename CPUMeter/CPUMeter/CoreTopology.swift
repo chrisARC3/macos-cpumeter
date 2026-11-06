@@ -31,6 +31,11 @@ nonisolated struct CoreTopology: Equatable, Sendable {
     /// core types were determined.
     var fallbackReason: String?
 
+    /// How many cores the groups cover: the number each read of the counters
+    /// should return. When a read returns a different number, the groups are
+    /// read again (NFR-4, Increment 4.2).
+    var coreCount: Int { groups.reduce(0) { $0 + $1.cores.count } }
+
     /// The fallback row's name (FR-8c). The row has no label, so it is never
     /// shown, and no core type can be named wrongly.
     static let fallbackName = "Cores"

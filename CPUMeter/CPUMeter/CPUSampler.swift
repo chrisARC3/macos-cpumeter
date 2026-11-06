@@ -5,10 +5,12 @@
 //  Samples every core on a timer and works out the percentages the meter
 //  shows (FR-8d, FR-9, FR-10, FR-12, FR-14, FR-15). Increment 1.3; each
 //  group's average since Increment 2.3, the five refresh rates since
-//  Increment 3.2, and pausing while the window can't be seen since
-//  Increment 4.1. The arithmetic is kept in pure functions, so it can be
-//  checked without a timer. In Debug builds, `SimulatedCores.swift` can
-//  stand in for the Mac's cores (Increment 2.4).
+//  Increment 3.2, pausing while the window can't be seen since
+//  Increment 4.1, and failed reads, short readings, a changed core count and
+//  skipping unchanged updates since Increment 4.2. The arithmetic and the
+//  decisions are kept in pure functions, so they can be checked without a
+//  timer. In Debug builds, `SimulatedCores.swift` can stand in for the
+//  Mac's cores (Increment 2.4).
 //
 
 import Foundation
@@ -57,6 +59,57 @@ nonisolated struct CPUSample: Equatable, Sendable {
     /// Across all cores, from the raw ticks summed over every core rather than
     /// by averaging rounded figures (FR-10). Nil if no core reported ticks.
     var overall: CPUUsage?
+
+    /// What the meter shows of this update, at the whole percentages it
+    /// draws (NFR-1).
+    var shown: ShownFigures {
+        func percent(_ share: Double) -> Int { MeterDrawing.wholePercent(share) }
+        return ShownFigures(
+            cores: cores.map { core in
+                core.map { ShownFigures.Core(figure: percent($0.busy), user: percent($0.user),
+                                             system: percent($0.system)) }
+            },
+            groups: groups.map { $0.map { percent($0.busy) } },
+            overall: overall.map { percent($0.busy) })
+    }
+}
+
+/// What the meter shows of an update, as whole percentages (NFR-1): each
+/// core's figure and the user and system parts of its bar, each group's
+/// average, and the overall figure, with nil for a dash. Two updates with the
+/// same figures draw the same meter, but for a bar that can differ by under
+/// 1% of its height, so the second isn't drawn.
+nonisolated struct ShownFigures: Equatable, Sendable {
+    nonisolated struct Core: Equatable, Sendable {
+        /// The figure under the bar: user and system together (FR-11).
+        var figure: Int
+        var user: Int
+        var system: Int
+    }
+
+    var cores: [Core?]
+    var groups: [Int?]
+    var overall: Int?
+}
+
+/// What one read of the counters leads to (FR-14, FR-15, NFR-4). Worked out
+/// by `CPUSampler.outcome(baseline:read:elapsed:groupedCores:)`, so every case
+/// can be checked without a timer.
+nonisolated enum ReadOutcome: Equatable, Sendable {
+    /// The read failed. The meter shows the zero state, and the baseline is
+    /// kept, so the next read measures the whole gap (FR-15).
+    case failed
+    /// The read came too soon after the last one, as when a late timer
+    /// catches up. The meter keeps its last update and the baseline is kept,
+    /// so this short span is folded into the next reading.
+    case tooShort
+    /// The number of cores changed, to this many. The core groups are read
+    /// again, this read becomes the baseline, and the meter shows the zero
+    /// state until the next update (NFR-4).
+    case coreCountChanged(to: Int)
+    /// An update from these changes, with this read as the new baseline. Nil
+    /// when there's no baseline to measure from, which gives the zero state.
+    case update([TickChange]?)
 }
 
 /// Reads every core's counters on a timer and publishes the latest sample for
@@ -68,13 +121,14 @@ final class CPUSampler {
 
     // MARK: Published (read by the meter)
 
-    /// The core groups, read once when the sampler is made, so they're known
-    /// before the window opens (FR-8). Increment 4.2 reads them again if the
-    /// core count changes.
+    /// The core groups, read when the sampler is made, so they're known
+    /// before the window opens (FR-8), and read again if the number of cores
+    /// a read returns changes (NFR-4). The window's layouts follow them.
     private(set) var topology: CoreTopology
 
     /// The latest update, or nil before the first reading and after a failed
-    /// read: the dash state (FR-14, design §6).
+    /// read: the dash state (FR-14, design §6). Replaced only when the new
+    /// update changes something the meter shows (NFR-1).
     private(set) var sample: CPUSample?
 
     // MARK: Bookkeeping (not observed)
@@ -184,6 +238,14 @@ final class CPUSampler {
     /// of ticks (FR-18d).
     nonisolated static let shortestReading = RefreshRate.oneSecond.interval
 
+    /// The shortest span a timer's reading is shown for: half the shortest
+    /// reading, about 50 ticks per core. A repeating timer that fires late,
+    /// after the app stalls or the Mac wakes, keeps its schedule, so its next
+    /// firing can come a fraction of a second later. Such a reading, from a
+    /// few ticks, could show a false spike (NFR-4), so it's folded into the
+    /// next. A timer on time, up to a tenth early or late, is never this short.
+    nonisolated static let shortestShownSpan = shortestReading / 2
+
     /// How long after a rate change the meter updates (FR-18d): at once when
     /// the last read was at least `shortestReading` ago, otherwise when that
     /// time is up. Never more than `shortestReading`.
@@ -227,19 +289,60 @@ final class CPUSampler {
 
     /// One update, from one read (FR-12).
     private func tick() {
-        // A failed read keeps the baseline, so the next read measures the
-        // whole gap. Each percentage is a share of ticks, not of clock time,
-        // so a longer interval still gives the right figures (FR-15).
-        guard let current = readCounters() else {
-            sample = nil
-            return
+        let current = readCounters()
+        let elapsed = ProcessInfo.processInfo.systemUptime - baselineTime
+        let outcome = Self.outcome(baseline: baseline, read: current, elapsed: elapsed,
+                                   groupedCores: topology.coreCount)
+        switch outcome {
+        case .failed:
+            show(nil)
+        case .tooShort:
+            // The baseline stays, so the next reading covers this span too.
+            break
+        case .coreCountChanged(let count):
+            topology = readTopology(coreCount: count)
+            setBaseline(current)
+            show(nil)
+        case .update(let changes):
+            setBaseline(current)
+            let groups = topology.groups
+            show(changes.map { Self.sample(from: $0, groups: groups) })
         }
-        // Reads with different core counts give no changes. The newer read
-        // becomes the baseline, so the next tick measures again.
-        let changes = baseline.flatMap { CoreCounters.changes(from: $0, to: current) }
-        setBaseline(current)
-        let groups = topology.groups
-        sample = changes.map { Self.sample(from: $0, groups: groups) }
+    }
+
+    /// What a read leads to (FR-14, FR-15, NFR-4).
+    ///
+    /// - Parameters:
+    ///   - baseline: The read the next update is measured from, if any.
+    ///   - current: This read, or nil if it failed.
+    ///   - elapsed: Seconds since the baseline was read.
+    ///   - groupedCores: How many cores the core groups cover.
+    nonisolated static func outcome(baseline: [CoreTicks]?, read current: [CoreTicks]?,
+                                    elapsed: TimeInterval, groupedCores: Int) -> ReadOutcome {
+        guard let current else { return .failed }
+        guard current.count == groupedCores else { return .coreCountChanged(to: current.count) }
+        // No baseline, or one with a different core count: this read starts
+        // a new one.
+        guard let baseline, baseline.count == current.count else { return .update(nil) }
+        guard elapsed >= shortestShownSpan else { return .tooShort }
+        // Each percentage is a share of ticks, not of clock time, so a longer
+        // span still gives the right figures (FR-15).
+        return .update(CoreCounters.changes(from: baseline, to: current))
+    }
+
+    /// Shows an update, unless it would draw the same meter (NFR-1).
+    private func show(_ newSample: CPUSample?) {
+        guard newSample?.shown != sample?.shown else { return }
+        sample = newSample
+    }
+
+    /// The core groups for this many cores: macOS's own, or in a Debug build
+    /// with a simulation, the simulated ones (Increment 2.4).
+    private func readTopology(coreCount: Int) -> CoreTopology {
+        #if DEBUG
+        if let simulation { return simulation.topology }
+        #endif
+        return CoreTopology.current(coreCount: coreCount)
     }
 
     /// Every core's counters: the Mac's own, or in a Debug build with a

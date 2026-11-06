@@ -5,8 +5,9 @@
 //  The one place CPUMeter reaches the window SwiftUI creates: requirements §6,
 //  the fourth use of AppKit, added in v1.7. The window level for Keep on Top
 //  and staying on screen (Increment 0.2), settling at one of the three
-//  sizes after a drag or any other resize (Increment 0.3), and passing on
-//  macOS's notice of whether the window can be seen (Increment 4.1).
+//  sizes after a drag or any other resize (Increment 0.3), passing on
+//  macOS's notice of whether the window can be seen (Increment 4.1), and
+//  taking new widths if the core count changes (Increment 4.2).
 //
 
 import SwiftUI
@@ -18,7 +19,7 @@ import AppKit
 /// - settles the window at one of the three sizes when a drag or other resize
 ///   ends, and saves that size (FR-3d);
 /// - sets the window's size when View → Size changes, with its top-left corner
-///   in place;
+///   in place, and again when the sizes' widths change with the core count;
 /// - keeps the window on screen after any of these (FR-22);
 /// - says when the window can or can't be seen, so sampling pauses while it
 ///   can't (FR-17).
@@ -77,10 +78,17 @@ final class WindowAccessView: NSView {
     /// The size the window is at, or is settling at.
     private(set) var size = MeterSize.medium
 
-    /// Each size's content size on this Mac. Worked out at launch and not
-    /// changed in Increment 2.1; Increment 4.2 changes it if the core count
-    /// does.
-    var layouts: MeterLayouts
+    /// Each size's content size on this Mac. Worked out at launch, and again
+    /// if the core count changes, when the window takes its size's new width
+    /// (NFR-4, Increment 4.2).
+    var layouts: MeterLayouts {
+        didSet { layoutsChanged(from: oldValue) }
+    }
+
+    /// True from a change of layouts until the window has taken its new
+    /// width, so that a resize SwiftUI makes meanwhile, to fit the new size
+    /// limits, isn't settled as if the user had made it.
+    private var isChangingLayouts = false
 
     /// Saves a size the window settled at as the chosen size.
     var onSettle: ((MeterSize) -> Void)?
@@ -115,6 +123,21 @@ final class WindowAccessView: NSView {
         guard newSize != size else { return }
         size = newSize
         setSize(newSize, pinning: .topLeft, animate: false)
+    }
+
+    /// The sizes' widths changed with the core count (NFR-4): the window
+    /// takes its size's new width, with the top-left corner it has now, and
+    /// stays on screen (FR-3b, FR-22). This waits one turn of the run loop,
+    /// so SwiftUI has applied the content's new size limits first.
+    private func layoutsChanged(from old: MeterLayouts) {
+        guard layouts != old, let window, isReady else { return }
+        isChangingLayouts = true
+        let start = window.frame
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.setSize(self.size, pinning: .topLeft, animate: false, from: start)
+            self.isChangingLayouts = false
+        }
     }
 
     override func viewDidMoveToWindow() {
@@ -189,7 +212,7 @@ final class WindowAccessView: NSView {
     /// the window settles at the nearest one with its top-left in place
     /// (requirements §8, item 22). Either way it stays on screen (FR-22).
     @objc private func windowDidResize(_ notification: Notification) {
-        guard let window, isReady, !isSettingFrame, dragStartFrame == nil,
+        guard let window, isReady, !isSettingFrame, !isChangingLayouts, dragStartFrame == nil,
               !window.inLiveResize else { return }
         let newSize = MeterSize.settled(from: layouts.contentSize(of: size),
                                         to: contentSize(ofFrame: window.frame),
@@ -208,15 +231,17 @@ final class WindowAccessView: NSView {
     }
 
     /// Sets the window to the given size's content size, with the pinned edges
-    /// in place, then moves it just far enough to be on screen (FR-22).
-    private func setSize(_ size: MeterSize, pinning pin: Pin, animate: Bool) {
+    /// where they are, or where they were in `start`, then moves it just far
+    /// enough to be on screen (FR-22).
+    private func setSize(_ size: MeterSize, pinning pin: Pin, animate: Bool, from start: NSRect? = nil) {
         guard let window else { return }
         let current = window.frame
+        let anchor = start ?? current
         let content = layouts.contentSize(of: size)
         var target = NSRect(x: 0, y: 0, width: content.width,
                             height: content.height + titleBarHeight(of: window))
-        target.origin.x = pin.right ? current.maxX - target.width : current.minX
-        target.origin.y = pin.bottom ? current.minY : current.maxY - target.height
+        target.origin.x = pin.right ? anchor.maxX - target.width : anchor.minX
+        target.origin.y = pin.bottom ? anchor.minY : anchor.maxY - target.height
         target = onScreen(target, for: window)
         guard target != current else { return }
         isSettingFrame = true

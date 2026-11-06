@@ -297,9 +297,9 @@ nonisolated struct MeterLayout: Equatable, Sendable {
     }
 }
 
-/// The layout at each of the three sizes, worked out once at launch from this
-/// Mac's core groups. Nothing here is stored, so the window is always sized for
-/// the Mac the app is running on (FR-3b, FR-3c).
+/// The layout at each of the three sizes, worked out at launch from this Mac's
+/// core groups, and again if they change. Nothing here is stored, so the
+/// window is always sized for the Mac the app is running on (FR-3b, FR-3c).
 nonisolated struct MeterLayouts: Equatable, Sendable {
     private var small: MeterLayout
     private var medium: MeterLayout
@@ -318,6 +318,14 @@ nonisolated struct MeterLayouts: Equatable, Sendable {
         small = layout(.small)
         medium = layout(.medium)
         large = layout(.large)
+    }
+
+    /// The layouts for a Mac's core groups, with no label on the fallback row
+    /// (FR-8c). Worked out at launch, and again if the core count changes
+    /// (NFR-4, Increment 4.2).
+    init(topology: CoreTopology,
+         labelWidth: (_ label: String, _ fontSize: CGFloat) -> CGFloat = MeterLayout.measuredLabelWidth) {
+        self.init(groups: topology.groups, labeled: topology.fallbackReason == nil, labelWidth: labelWidth)
     }
 
     subscript(size: MeterSize) -> MeterLayout {

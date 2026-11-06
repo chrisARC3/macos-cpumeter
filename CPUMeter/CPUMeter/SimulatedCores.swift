@@ -3,7 +3,8 @@
 //  CPUMeter
 //
 //  Other core counts, for seeing the meter as it would look on Macs it can't
-//  be run on (Increment 2.4; FR-3b, FR-8a, FR-8c, FR-8e, FR-11). Compiled
+//  be run on (Increment 2.4; FR-3b, FR-8a, FR-8c, FR-8e, FR-11), and a core
+//  count that changes while it runs (Increment 4.2; NFR-4). Compiled
 //  only in Debug builds, so a Release build has none of it and always shows
 //  the Mac it runs on.
 //
@@ -20,6 +21,11 @@
 //    -simulateLoad full
 //        Every core at 100%, for checking the figures at their widest. Without
 //        it, or with `-simulateLoad moving`, a pattern moves across the bars.
+//
+//    -simulateCoreChange Efficiency:6,Performance:12
+//        After the first read and 5 updates, the cores change to these, in the
+//        same form as -simulateCores. A real Mac's core count doesn't change
+//        while it runs; this shows what the meter does if it ever does.
 //
 //  The simulated counters go through the same sampling as the real ones, so
 //  the figures, group averages and bars are worked out by the app's own code.
@@ -45,8 +51,12 @@ nonisolated struct SimulatedCores: Equatable, Sendable {
         var description: String
     }
 
-    /// The groups the meter shows in place of the Mac's own.
-    let topology: CoreTopology
+    /// The groups the meter shows in place of the Mac's own. They change to
+    /// `laterTopology`, if there is one, after `readsBeforeChange` reads.
+    private(set) var topology: CoreTopology
+
+    /// The groups `-simulateCoreChange` asks for, if any.
+    let laterTopology: CoreTopology?
 
     let load: Load
 
@@ -69,18 +79,31 @@ nonisolated struct SimulatedCores: Equatable, Sendable {
     /// this leaves room to look beyond it.
     static let maximumCores = 64
 
-    init(topology: CoreTopology, load: Load) {
+    /// Reads before the cores change, with `-simulateCoreChange`: the first
+    /// read, which is the baseline, and 5 updates.
+    static let readsBeforeChange = 6
+
+    init(topology: CoreTopology, load: Load, laterTopology: CoreTopology? = nil) {
         self.topology = topology
         self.load = load
-        let cores = topology.groups.reduce(0) { $0 + $1.cores.count }
-        counters = Array(repeating: CoreTicks(user: Self.firstCounter, system: Self.firstCounter,
-                                              idle: Self.firstCounter, nice: 0),
-                         count: cores)
+        self.laterTopology = laterTopology
+        counters = Self.startingCounters(count: topology.coreCount)
+    }
+
+    /// Every core's counters before the first read.
+    private static func startingCounters(count: Int) -> [CoreTicks] {
+        Array(repeating: CoreTicks(user: firstCounter, system: firstCounter, idle: firstCounter, nice: 0),
+              count: count)
     }
 
     /// The next read: each core's counters after one more interval.
     mutating func read() -> [CoreTicks] {
         step += 1
+        // With -simulateCoreChange, this read is the first with the new cores.
+        if step == Self.readsBeforeChange + 1, let laterTopology {
+            topology = laterTopology
+            counters = Self.startingCounters(count: laterTopology.coreCount)
+        }
         for core in counters.indices {
             let ticks = Self.ticks(core: core, coreCount: counters.count, step: step, load: load)
             counters[core].user &+= UInt32(ticks.user)
@@ -140,8 +163,9 @@ nonisolated struct SimulatedCores: Equatable, Sendable {
         }
     }
 
-    /// What the launch arguments ask for: nil with neither `-simulateCores`
-    /// nor `-simulateLoad`, otherwise the simulation or why it can't be run.
+    /// What the launch arguments ask for: nil with none of `-simulateCores`,
+    /// `-simulateLoad` and `-simulateCoreChange`, otherwise the simulation or
+    /// why it can't be run.
     static func parse(arguments: [String]) -> Result<SimulatedCores, ArgumentError>? {
         /// The value after a flag: nil if the flag isn't there, empty if
         /// nothing follows it.
@@ -151,10 +175,12 @@ nonisolated struct SimulatedCores: Equatable, Sendable {
         }
         let coresText = value(of: "-simulateCores")
         let loadText = value(of: "-simulateLoad")
-        if coresText == nil && loadText == nil { return nil }
+        let changeText = value(of: "-simulateCoreChange")
+        if coresText == nil && loadText == nil && changeText == nil { return nil }
 
         guard let coresText else {
-            return .failure(ArgumentError(description: "-simulateLoad needs -simulateCores."))
+            let flag = loadText != nil ? "-simulateLoad" : "-simulateCoreChange"
+            return .failure(ArgumentError(description: "\(flag) needs -simulateCores."))
         }
         guard !coresText.isEmpty else {
             return .failure(ArgumentError(description:
@@ -167,14 +193,28 @@ nonisolated struct SimulatedCores: Equatable, Sendable {
             }
             load = chosen
         }
-        return topology(from: coresText).map { SimulatedCores(topology: $0, load: load) }
+        var laterTopology: CoreTopology?
+        if let changeText {
+            guard !changeText.isEmpty else {
+                return .failure(ArgumentError(description:
+                    "-simulateCoreChange needs a value, such as Efficiency:6,Performance:12."))
+            }
+            switch topology(from: changeText, flag: "-simulateCoreChange") {
+            case .success(let later): laterTopology = later
+            case .failure(let error): return .failure(error)
+            }
+        }
+        return topology(from: coresText).map {
+            SimulatedCores(topology: $0, load: load, laterTopology: laterTopology)
+        }
     }
 
     /// The groups `-simulateCores` describes: "Name:count,Name:count", left
     /// to right, or a bare count for the unlabeled fallback row.
-    static func topology(from text: String) -> Result<CoreTopology, ArgumentError> {
+    static func topology(from text: String, flag: String = "-simulateCores")
+        -> Result<CoreTopology, ArgumentError> {
         func refuse(_ why: String) -> Result<CoreTopology, ArgumentError> {
-            .failure(ArgumentError(description: "-simulateCores \"\(text)\": \(why)."))
+            .failure(ArgumentError(description: "\(flag) \"\(text)\": \(why)."))
         }
         let trimmed = text.trimmingCharacters(in: .whitespaces)
 
@@ -211,11 +251,14 @@ nonisolated struct SimulatedCores: Equatable, Sendable {
 
     /// What's being simulated, for the console.
     var summary: String {
-        let cores = topology.groups.reduce(0) { $0 + $1.cores.count }
-        let groups = topology.fallbackReason == nil
-            ? topology.groups.map { "\($0.name) \($0.cores.count)" }.joined(separator: ", ")
-            : "types unknown, so one row with no label"
-        return "\(cores) cores (\(groups)), \(load == .full ? "every core at 100%" : "a moving pattern")"
+        func describe(_ topology: CoreTopology) -> String {
+            let groups = topology.fallbackReason == nil
+                ? topology.groups.map { "\($0.name) \($0.cores.count)" }.joined(separator: ", ")
+                : "types unknown, so one row with no label"
+            return "\(topology.coreCount) cores (\(groups))"
+        }
+        let later = laterTopology.map { ", then after 5 updates \(describe($0))" } ?? ""
+        return "\(describe(topology))\(later), \(load == .full ? "every core at 100%" : "a moving pattern")"
     }
 }
 
