@@ -5,7 +5,8 @@
 //  The meter: the top row, the group labels, a bar for each core and the
 //  figure under it, all drawn in a single `Canvas` and never with Charts
 //  (FR-6, FR-7, FR-27). Increment 2.2, revised in Increment 2.3 for system
-//  time at the base of each bar, the key's order, and the labels' averages.
+//  time at the base of each bar, the key's order, and the labels' averages,
+//  and in Increment 3.3 for colors chosen in View → Colors.
 //  `MeterLayout` says where everything goes; this file adds the colors and
 //  text, and snaps the bars to whole pixels. The bar geometry and the text
 //  are pure functions, so they can be checked without drawing.
@@ -25,13 +26,16 @@ struct MeterView: View {
     /// (FR-14, design §6).
     let sample: CPUSample?
 
+    /// The bar colors chosen in View → Colors, if any (FR-28).
+    let colorChoice: BarColorChoice
+
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.displayScale) private var displayScale
 
     var body: some View {
         let layout = layout
         let sample = sample
-        let colors = MeterColors.standard(for: colorScheme)
+        let colors = MeterColors.standard(for: colorScheme, chosen: colorChoice)
         let scale = displayScale
         Canvas { context, _ in
             Self.draw(layout: layout, sample: sample, colors: colors, scale: scale, in: &context)
@@ -135,13 +139,15 @@ nonisolated struct MeterColors: Sendable {
     /// The key, the group labels and the per-core figures.
     var secondaryText: Color
 
-    /// The default colors: the system's blue and orange for the bars, which
-    /// adapt to the appearance, and a faint track (NFR-5). View → Colors
-    /// (Increment 3.3) replaces the two bar colors.
-    static func standard(for scheme: ColorScheme) -> MeterColors {
+    /// The meter's colors in an appearance: the bar colors chosen in
+    /// View → Colors, in both the bars and the key, and a faint track
+    /// (design §4). A part with no chosen color uses the system's blue or
+    /// orange, which adapt to the appearance; a chosen one stays as picked
+    /// (NFR-5, FR-28a).
+    static func standard(for scheme: ColorScheme, chosen: BarColorChoice = BarColorChoice()) -> MeterColors {
         MeterColors(
-            user: Color(nsColor: .systemBlue),
-            system: Color(nsColor: .systemOrange),
+            user: Color(nsColor: chosen.color(for: .user)),
+            system: Color(nsColor: chosen.color(for: .system)),
             track: scheme == .dark ? .white.opacity(0.10) : .black.opacity(0.08),
             primaryText: Color(nsColor: .labelColor),
             secondaryText: Color(nsColor: .secondaryLabelColor))

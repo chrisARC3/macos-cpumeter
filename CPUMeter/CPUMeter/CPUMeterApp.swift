@@ -3,11 +3,12 @@
 //  CPUMeter
 //
 //  The app's single window and its menus: three sizes chosen from the menu,
-//  with ⌘1–⌘3 or by dragging, five refresh rates, and Keep on Top, each
-//  remembered across launches, as is the window's position.
+//  with ⌘1–⌘3 or by dragging, five refresh rates, the two bar colors, and
+//  Keep on Top, each remembered across launches, as is the window's position.
 //  `MeterSize.swift` holds the sizes and the snap rule, `MeterLayout.swift`
 //  works out each size's width on this Mac, `MeterView.swift` draws the meter,
-//  and `WindowAccess.swift` does the parts SwiftUI can't.
+//  `BarColors.swift` holds the colors and opens the color chooser, and
+//  `WindowAccess.swift` does the parts SwiftUI can't.
 //
 
 import SwiftUI
@@ -42,6 +43,10 @@ struct CPUMeterApp: App {
     /// the core groups are known before the window opens.
     @State private var sampler: CPUSampler
 
+    /// View → Colors: the chosen bar colors, remembered across launches, and
+    /// the system color chooser (FR-28).
+    @State private var barColors = BarColors()
+
     /// The window's size, and the place of everything in it, at each of the
     /// three sizes (Increment 2.1). Worked out once at launch from this Mac's
     /// core groups, with the group labels measured by AppKit, and never stored
@@ -62,8 +67,9 @@ struct CPUMeterApp: App {
         // because this is a one-window app, and because closing a lone `Window`
         // scene quits the app (FR-23).
         Window(Self.windowTitle, id: "main") {
-            // The meter at the chosen size (Increment 2.2).
-            LiveMeter(sampler: sampler, layout: layouts[size])
+            // The meter at the chosen size (Increment 2.2), in the chosen
+            // colors (Increment 3.3).
+            LiveMeter(sampler: sampler, barColors: barColors, layout: layouts[size])
                 // The window can be dragged anywhere from Small to Large (FR-3d).
                 // While it's between sizes, the meter keeps its size, pinned to
                 // the top-left, and the rest shows the window background (design §2).
@@ -85,7 +91,12 @@ struct CPUMeterApp: App {
                     sampler.setRate(refreshRate)
                     sampler.start()
                 }
-                .onDisappear { sampler.stop() }
+                // Closing the meter closes the color chooser too, so the app
+                // still quits (FR-23).
+                .onDisappear {
+                    sampler.stop()
+                    barColors.closeChooser()
+                }
                 .onChange(of: refreshRate) { _, rate in sampler.setRate(rate) }
                 // Full screen is off, so the green button zooms to Large and
                 // back (requirements §8, item 21).
@@ -108,13 +119,21 @@ struct CPUMeterApp: App {
             // left alone: replacing one, even with nothing, adds a stray
             // separator line to File.
             CommandGroup(replacing: .saveItem) {
-                Button("Close") { dismissWindow(id: "main") }
-                    .keyboardShortcut("w")
+                // With the color chooser in front, ⌘W closes the chooser, as
+                // in other Mac apps, rather than the meter, which would quit.
+                Button("Close") {
+                    if barColors.chooserIsKey {
+                        barColors.closeChooser()
+                    } else {
+                        dismissWindow(id: "main")
+                    }
+                }
+                .keyboardShortcut("w")
             }
 
             // The View menu (FR-24, design §5). Replacing the toolbar group also
             // removes Show Toolbar and Customize Toolbar, which don't apply
-            // (FR-25). Colors (3.3) goes above the divider, after Refresh Rate.
+            // (FR-25).
             CommandGroup(replacing: .toolbar) {
                 // ⌘1, ⌘2 and ⌘3 choose a size just as the menu does, so the
                 // window keeps its top-left corner and stays on screen
@@ -132,6 +151,16 @@ struct CPUMeterApp: App {
                         Text(option.title).tag(option)
                     }
                 }
+                // System Color… and User Color… in the key's order, each
+                // opening the system color chooser, then Reset to Defaults
+                // (FR-28b, FR-28e).
+                Menu("Colors") {
+                    ForEach(BarPart.allCases, id: \.self) { part in
+                        Button(part.menuTitle) { barColors.openChooser(for: part) }
+                    }
+                    Divider()
+                    Button("Reset to Defaults") { barColors.reset() }
+                }
                 Divider()
                 Toggle("Keep on Top", isOn: $keepOnTop)
             }
@@ -139,14 +168,17 @@ struct CPUMeterApp: App {
     }
 }
 
-/// The meter, showing the sampler's latest update. A view of its own, so that
-/// each update redraws only the meter and not the rest of the window's content.
+/// The meter, showing the sampler's latest update in the chosen colors. A view
+/// of its own, so that each update, and each color picked, redraws only the
+/// meter and not the rest of the window's content. A color picked shows at
+/// once, between updates (FR-28c).
 private struct LiveMeter: View {
     let sampler: CPUSampler
+    let barColors: BarColors
     let layout: MeterLayout
 
     var body: some View {
-        MeterView(layout: layout, sample: sampler.sample)
+        MeterView(layout: layout, sample: sampler.sample, colorChoice: barColors.choice)
     }
 }
 
