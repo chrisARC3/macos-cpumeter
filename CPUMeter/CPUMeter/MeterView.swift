@@ -137,7 +137,7 @@ nonisolated struct MeterColors: Sendable {
 
     /// The default colors: the system's blue and orange for the bars, which
     /// adapt to the appearance, and a faint track (NFR-5). View → Colors
-    /// (Increment 3.2) replaces the two bar colors.
+    /// (Increment 3.3) replaces the two bar colors.
     static func standard(for scheme: ColorScheme) -> MeterColors {
         MeterColors(
             user: Color(nsColor: .systemBlue),

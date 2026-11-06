@@ -2,8 +2,8 @@
 //  CPUMeterApp.swift
 //  CPUMeter
 //
-//  The app's single window and its menus: three sizes chosen from the menu or
-//  by dragging, Keep on Top, and a remembered size, position and window level.
+//  The app's single window and its menus: three sizes chosen from the menu,
+//  with ⌘1–⌘3 or by dragging, Keep on Top, and a remembered size, position and window level.
 //  `MeterSize.swift` holds the sizes and the snap rule, `MeterLayout.swift`
 //  works out each size's width on this Mac, `MeterView.swift` draws the meter,
 //  and `WindowAccess.swift` does the parts SwiftUI can't.
@@ -104,11 +104,15 @@ struct CPUMeterApp: App {
 
             // The View menu (FR-24, design §5). Replacing the toolbar group also
             // removes Show Toolbar and Customize Toolbar, which don't apply
-            // (FR-25). Refresh Rate (3.1) and Colors (3.2) go above the divider.
+            // (FR-25). Refresh Rate (3.2) and Colors (3.3) go above the divider.
             CommandGroup(replacing: .toolbar) {
+                // ⌘1, ⌘2 and ⌘3 choose a size just as the menu does, so the
+                // window keeps its top-left corner and stays on screen
+                // (FR-22, FR-24a, Increment 3.1). The menu shows them.
                 Picker("Size", selection: $size) {
                     ForEach(MeterSize.allCases) { option in
                         Text(option.title).tag(option)
+                            .keyboardShortcut(option.shortcutKey)
                     }
                 }
                 Divider()
@@ -126,5 +130,18 @@ private struct LiveMeter: View {
 
     var body: some View {
         MeterView(layout: layout, sample: sampler.sample)
+    }
+}
+
+private extension MeterSize {
+    /// The size's keyboard shortcut in View → Size, used with ⌘ (FR-24a):
+    /// ⌘1, ⌘2 and ⌘3 from smallest to largest, as Finder's View menu numbers
+    /// its views.
+    var shortcutKey: KeyEquivalent {
+        switch self {
+        case .small: "1"
+        case .medium: "2"
+        case .large: "3"
+        }
     }
 }

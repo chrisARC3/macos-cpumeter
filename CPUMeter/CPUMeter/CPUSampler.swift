@@ -66,7 +66,7 @@ final class CPUSampler {
     /// The previous read, which the next one is measured from.
     @ObservationIgnored private var baseline: [CoreTicks]?
 
-    /// Seconds between updates. View → Refresh Rate (3.1) makes it a setting.
+    /// Seconds between updates. View → Refresh Rate (3.2) makes it a setting.
     @ObservationIgnored private let interval: TimeInterval = 1
 
     #if DEBUG
