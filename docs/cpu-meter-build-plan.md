@@ -1,11 +1,11 @@
 # CPUMeter — Incremental Build Plan
 
-**Version:** 1.8
-**Changelog:** v1.8 (Nov 6, 2026) — adds the **macOS 27.2 recheck** between Phases 4 and 5, after Chris updated both Mac minis from macOS 27.0.1 to 27.2: Claude reruns the automated checks on the M4, and Chris does a short manual pass on each Mac, in place of repeating every test. No increment changed. v1.7 (Nov 6, 2026) — Increment 4.1 also times the first update after a pause: 1 second after the window is visible again, then at the chosen rate (requirements v1.14, FR-17). v1.6 (Nov 6, 2026) — after Increment 3.3, Chris's new keyboard shortcuts (requirements v1.13) get their own increment, the new **3.4, Keyboard shortcuts**, which now ends Phase 3: ⌘1 to ⌘5 for the refresh rates, and ⇧⌘S, ⇧⌘M and ⇧⌘L for the sizes in place of ⌘1, ⌘2 and ⌘3. 3.3 still took Phase 3's M1 pass, and 3.4 needs none. 3.1's Results stay as they were, a record of ⌘1–⌘3. v1.5 (Nov 5, 2026) — after Increment 3.2's first test, Chris's change to FR-18d (requirements v1.12): a new rate updates the meter at once, never from less than 1 second, rather than restarting the interval. 3.2's Build and Verify are updated, and 3.2 stays one increment. v1.4 (Nov 5, 2026) — after Increment 2.4, Chris's size shortcuts (requirements v1.11) get their own increment, the new **3.1, Size shortcuts**. Refresh Rate and Colors, which were 3.1 and 3.2, are now **3.2** and **3.3**, and Colors still completes Phase 3. v1.3 (Nov 5, 2026) — Increment 2.3 also builds requirements v1.10's wording: the overall figure reads "All cores: 42%", and the group labels take a colon. v1.2 (Nov 5, 2026) — after Increment 2.2, Chris's design changes (requirements v1.9) get their own increment, the new **2.3, design changes**. The old 2.3, other core counts, is now **2.4** and still completes Phase 2; earlier Results that point to it say 2.4. 3.2's menu lists System Color… first, and 4.2 compares the group averages too. v1.1 (Nov 4, 2026) — Increment 0.2's first test found two places where SwiftUI falls short, so requirements v1.7 adds direct window access and 0.2 now uses it, through the new `WindowAccess.swift`. Added Increment 0.3, snap resizing, at Chris's request. It now completes Phase 0 and takes Phase 0's M1 pass. After 0.2's second test, the scene drops `.windowLevel`, and File's Close replaces macOS's own Close group. v1.0 (Nov 2, 2026) — approved by Chris.
-**Date:** November 6, 2026
-**Companion to:** `cpu-meter-requirements.md` (v1.15) and `cpu-meter-ui-design.md`
+**Version:** 1.9
+**Changelog:** v1.9 (Nov 7, 2026) — Increment 5.2's first runs found that SwiftUI's `Canvas` leaves a system timer behind on every redraw at Medium and Large, so CPU use climbs for as long as the app runs, and Chris chose Core Animation (requirements v1.16). The new **5.3, Core Animation drawing**, redraws the meter with nothing on screen changing. Accuracy, the M3 MacBook Air check and the release, which were 5.3, 5.4 and 5.5, are now **5.4**, **5.5** and **5.6**. 5.2 records its first runs and the cause, and is completed by repeating its runs after 5.3, now also with Small, Medium and Large side by side on the M4, and with a definition of level (Claude's proposal). The Files table and coverage map are updated to match. v1.8 (Nov 6, 2026) — adds the **macOS 27.2 recheck** between Phases 4 and 5, after Chris updated both Mac minis from macOS 27.0.1 to 27.2: Claude reruns the automated checks on the M4, and Chris does a short manual pass on each Mac, in place of repeating every test. No increment changed. v1.7 (Nov 6, 2026) — Increment 4.1 also times the first update after a pause: 1 second after the window is visible again, then at the chosen rate (requirements v1.14, FR-17). v1.6 (Nov 6, 2026) — after Increment 3.3, Chris's new keyboard shortcuts (requirements v1.13) get their own increment, the new **3.4, Keyboard shortcuts**, which now ends Phase 3: ⌘1 to ⌘5 for the refresh rates, and ⇧⌘S, ⇧⌘M and ⇧⌘L for the sizes in place of ⌘1, ⌘2 and ⌘3. 3.3 still took Phase 3's M1 pass, and 3.4 needs none. 3.1's Results stay as they were, a record of ⌘1–⌘3. v1.5 (Nov 5, 2026) — after Increment 3.2's first test, Chris's change to FR-18d (requirements v1.12): a new rate updates the meter at once, never from less than 1 second, rather than restarting the interval. 3.2's Build and Verify are updated, and 3.2 stays one increment. v1.4 (Nov 5, 2026) — after Increment 2.4, Chris's size shortcuts (requirements v1.11) get their own increment, the new **3.1, Size shortcuts**. Refresh Rate and Colors, which were 3.1 and 3.2, are now **3.2** and **3.3**, and Colors still completes Phase 3. v1.3 (Nov 5, 2026) — Increment 2.3 also builds requirements v1.10's wording: the overall figure reads "All cores: 42%", and the group labels take a colon. v1.2 (Nov 5, 2026) — after Increment 2.2, Chris's design changes (requirements v1.9) get their own increment, the new **2.3, design changes**. The old 2.3, other core counts, is now **2.4** and still completes Phase 2; earlier Results that point to it say 2.4. 3.2's menu lists System Color… first, and 4.2 compares the group averages too. v1.1 (Nov 4, 2026) — Increment 0.2's first test found two places where SwiftUI falls short, so requirements v1.7 adds direct window access and 0.2 now uses it, through the new `WindowAccess.swift`. Added Increment 0.3, snap resizing, at Chris's request. It now completes Phase 0 and takes Phase 0's M1 pass. After 0.2's second test, the scene drops `.windowLevel`, and File's Close replaces macOS's own Close group. v1.0 (Nov 2, 2026) — approved by Chris.
+**Date:** November 7, 2026
+**Companion to:** `cpu-meter-requirements.md` (v1.16) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Chris then asked for some design changes and new wording, recorded in requirements v1.9 and v1.10, and Increment 2.3 (design changes), which builds them, was confirmed on the M4 the same day. Increment 2.4 (other core counts) was confirmed on the M4 and the M1 the same day, completing Phase 2. Chris then asked for keyboard shortcuts for the three sizes, recorded in requirements v1.11, and Increment 3.1 (size shortcuts), which builds them, was confirmed on the M4 the same day. Increment 3.2 (Refresh Rate) was confirmed on the M4 the same day, after Chris's change to how a new rate takes effect (requirements v1.12), as its Results record. Increment 3.3 (Colors) was confirmed on the M4 and the M1 on Nov 6, 2026, with Phase 3's M1 pass. Chris then asked for new keyboard shortcuts, recorded in requirements v1.13, and Increment 3.4 (keyboard shortcuts), which builds them, was confirmed on the M4 the same day, completing Phase 3. Increment 4.1 (pause when not visible), with requirements v1.14's timing, was confirmed on the M4 the same day, starting Phase 4. Increment 4.2 (failures, sleep and needless redraws) was confirmed on the M4 and the M1 the same day, completing Phase 4 with its M1 pass. Chris then updated both Mac minis from macOS 27.0.1 to 27.2, and the macOS 27.2 recheck, Claude's automated checks on the M4 and Chris's short pass on each Mac, was confirmed the same day. Increment 5.2 (footprint) is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Chris then asked for some design changes and new wording, recorded in requirements v1.9 and v1.10, and Increment 2.3 (design changes), which builds them, was confirmed on the M4 the same day. Increment 2.4 (other core counts) was confirmed on the M4 and the M1 the same day, completing Phase 2. Chris then asked for keyboard shortcuts for the three sizes, recorded in requirements v1.11, and Increment 3.1 (size shortcuts), which builds them, was confirmed on the M4 the same day. Increment 3.2 (Refresh Rate) was confirmed on the M4 the same day, after Chris's change to how a new rate takes effect (requirements v1.12), as its Results record. Increment 3.3 (Colors) was confirmed on the M4 and the M1 on Nov 6, 2026, with Phase 3's M1 pass. Chris then asked for new keyboard shortcuts, recorded in requirements v1.13, and Increment 3.4 (keyboard shortcuts), which builds them, was confirmed on the M4 the same day, completing Phase 3. Increment 4.1 (pause when not visible), with requirements v1.14's timing, was confirmed on the M4 the same day, starting Phase 4. Increment 4.2 (failures, sleep and needless redraws) was confirmed on the M4 and the M1 the same day, completing Phase 4 with its M1 pass. Chris then updated both Mac minis from macOS 27.0.1 to 27.2, and the macOS 27.2 recheck, Claude's automated checks on the M4 and Chris's short pass on each Mac, was confirmed the same day. Increment 5.2 (footprint)'s first runs, on Nov 6–7, 2026, found that SwiftUI's `Canvas` leaks a system timer on every redraw at Medium and Large, so CPU use climbs. Chris chose to move the drawing to Core Animation (requirements v1.16), which the new Increment 5.3 builds, and 5.2's runs are repeated after it. Increment 5.3 (Core Animation drawing) is next. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -65,7 +65,7 @@ The "Efficiency cores only" load is what proves the group labels are right. A ba
 - **Sampling:** a 1-second timer in the common run-loop modes keeps updating while a menu is open, and the figures follow every test load on both Mac minis (Increment 1.3, Nov 4).
 - **Group averages:** under the Efficiency-only load, only the Efficiency group's average rises in the real window on the M4 (Increment 2.3, Nov 5).
 - **Other core counts:** every Mac in the requirements' §6, drawn by the real code from simulated cores, is clean at all three sizes, with no overlaps, clipping or figures running together (Increment 2.4, Nov 5). Above 10 cores, that's as far as testing can go.
-- **Headless rendering:** SwiftUI's `Canvas` draws to a PNG through `ImageRenderer` from a plain command-line driver, at scale 1.0 and with real text (Nov 2). So Claude can inspect real layouts before Chris sees them.
+- **Headless rendering:** SwiftUI's `Canvas` draws to a PNG through `ImageRenderer` from a plain command-line driver, at scale 1.0 and with real text (Nov 2). So Claude can inspect real layouts before Chris sees them. *(The `Canvas` meter, until 5.3, which renders its layers headlessly instead.)*
 - **Figure spacing in `Canvas`:** "100" at 21, 23 and 25 pt per core reads as separate numbers there too (Nov 2).
 - **Rounding in `Canvas`:** at scale 1.0 it reports text widths rounded up to whole points: "Performance %" measures 77, 83 and 90 against AppKit's 76.1, 82.9 and 89.5. The width rule uses AppKit's figures, because it has to run before anything is drawn. 2.1 confirms the difference doesn't show.
 
@@ -83,12 +83,12 @@ The "Efficiency cores only" load is what proves the group labels are right. A ba
 | `CoreTopology.swift` | Core groups, names and order; the fallback | 1.2 |
 | `CPUSampler.swift` | Timer, refresh rates, baseline, percentages, pause and resume | 1.3 |
 | `MeterLayout.swift` | The width rule and the design document's numbers | 2.1 |
-| `MeterView.swift` | The `Canvas` drawing | 2.2 |
+| `MeterView.swift` | The meter's drawing: `Canvas` until 5.3, then Core Animation layers | 2.2, 5.3 |
 | `SimulatedCores.swift` | Other core counts, Debug builds only | 2.4 |
 | `BarColors.swift` | Chosen colors and the system color chooser | 3.3 |
 | `Assets.xcassets/AppIcon` | App icon, from Chris's artwork | 5.1 |
 | `design/AllIcons.jpeg` | Chris's original icon sheet, which the AppIcon images are cut from | 5.1 |
-| `README.md` | Rewritten once the app exists | 5.5 |
+| `README.md` | Rewritten once the app exists | 5.6 |
 | `NEXT-SESSION-HANDOFF.md` | Working note, local and gitignored | As needed |
 
 ---
@@ -641,41 +641,74 @@ Phases 0–4 were confirmed on macOS 27.0.1. After Increment 4.2, Chris updated 
 
 ### Increment 5.1 — App icon
 - **Goal:** Chris's icon in the Dock and in Finder. (FR-5)
-- **Build:** Chris creates the icon separately and tells Claude when it's finished. Claude then adds it to `Assets.xcassets/AppIcon`. This increment runs whenever the icon is ready and doesn't hold up any other increment, but the v1.0 release in 5.5 includes it. *(Chris's instruction, Nov 2, 2026.)*
+- **Build:** Chris creates the icon separately and tells Claude when it's finished. Claude then adds it to `Assets.xcassets/AppIcon`. This increment runs whenever the icon is ready and doesn't hold up any other increment, but the v1.0 release in 5.6 includes it. *(Chris's instruction, Nov 2, 2026.)*
 - **Verify:** Chris checks it in the Dock and in Finder.
 - **Done when:** Chris approves it.
 - **Result (Nov 4, 2026):** Chris's artwork arrived as one sheet of six drawings on a dark background, labelled 512 down to 16. It's kept as `design/AllIcons.jpeg`. Each drawing was cut out of the background, and each icon size uses the drawing labelled for it, with the 1024-pixel size taken from the largest. Every drawing is larger than its label, so nothing was enlarged. As drawn, the icon was put inside a gray rounded square by macOS 27, because the chip's outline isn't Apple's standard shape. Chris chose a version stretched to Apple's 824-of-1024 tile and clipped to its corners. That trims the outer pin tips and leaves the shadow to macOS, which then shows the icon full size. `xcodebuild` is clean. The first run from Xcode still showed the blank icon, because macOS caches an app's icon by the `.app` folder's path and date, and an Xcode rebuild doesn't change the folder's date. Touching the built `.app` fixed it. **Confirmed by Chris** (Nov 4, 2026): the new icon shows in the Dock and the About box.
 
 ### Increment 5.2 — Footprint
 - **Goal:** Measure and report the real cost. There's no pass or fail ceiling. (NFR-1)
-- **Build:** A Release build, at Medium and a 1-second refresh. The saved window frame gets noted first, because of DriveSpeed's lesson, and restored if the build disturbs it.
-- **Verify:** On each Mac mini, run this at the start and again after at least an hour, then divide the CPU time gained by the time elapsed:
+- **Build:** A Release build, at Medium and a 1-second refresh, with Keep on Top on. Chris's settings are saved first and restored after every run, because of DriveSpeed's lesson. From v1.9, the build is 5.3's Core Animation meter.
+- **Verify:**
+  - On each Mac mini, `local-tests/inc5.2/measure52.sh` runs the Release build for 65 minutes, the first 5 as warm-up, and logs its CPU time and memory every minute. It ends with a 5-second `sample` for the share of time the main thread sits idle. The M1 gets the same script, pasted as one command.
+  - On the M4, `local-tests/inc5.2/cpucheck/cpucheck.sh` also runs copies of the build at Small, Medium and Large side by side for 65 minutes, so all three sizes share the same conditions, and counts each copy's system timers. Each copy has its own test bundle ID, so Chris's settings aren't touched. *(Added in v1.9, for NFR-1's "at every size".)*
+- **Done when:** CPU and memory are recorded for both Macs, next to DriveSpeed's 0.75% of one core, and CPU and memory stay level after warm-up at every size (NFR-1): all three on the M4, and Medium on the M1. Results go here and in the README.
+  - **Level** means a CPU trend within ±0.03% of one core per hour, a timer count that doesn't grow, and resident memory that grows by less than 0.5 MB across the hour. *(Claude's proposal, v1.9. Under `Canvas`, Small measured +0.01 and −0.01% per hour and +0.1 and +0.2 MB; Medium measured +0.14 and +0.16% per hour and +1.3 and +1.6 MB.)*
+- **Result, first runs (Nov 6, 2026),** of the `Canvas` meter: a Release build of `4d1baf8`, 65 minutes on each Mac mini on macOS 27.2, at Medium, a 1-second refresh and Keep on Top, with Chris's settings saved first and restored after.
 
-  ```bash
-  ps -o %cpu=,cputime=,etime=,rss= -p "$(pgrep -x CPUMeter)"
-  ```
+  | | M4 | M1 |
+  |---|---|---|
+  | CPU, minutes 5–65 | 0.774% of one core | 1.241% |
+  | CPU, first → last 10 minutes | 0.712% → 0.842% | 1.135% → 1.358% |
+  | Footprint, minute 5 → 65 | 88.8 → 82.4 MB | 31.5 → 31.4 MB |
+  | Resident, minute 5 → 65 | 96.0 → 96.6 MB | 92.7 → 94.2 MB |
+  | Main thread idle | 99.4% | 98.3% |
 
-  Then, for the share of time the main thread sits idle, run:
+  The M4 matches DriveSpeed's 0.75%, but **neither Mac's CPU stayed level:** each climbed about a fifth across the hour. Memory wasn't flat either. The M4's footprint grew about 1.6 MB an hour and only looked flat because macOS took back about 8 MB at minute 58.
+- **Result, the cause (Nov 6–7, 2026):**
+  - `heap` found one more system timer (a `dispatch_source_t`) and one block for every update. Each was made inside SwiftUI's renderer, RenderBox, by its surface pool's `collect`, and each is still referenced, so `leaks` reports none.
+  - A copy of the app with switches, each turning off one part, ruled out the `Window` scene, `WindowAccess`, the size limits, the full-screen setting, resizability, the menus, the timer's tolerance and the sandbox, and the colors, text, key and clipping one at a time. A meter frozen after its first update didn't leak.
+  - **The trigger is the size of what `Canvas` draws.** Above about 336 × 160 points, `Canvas` is drawn through a different kind of layer, an image queue rather than a surface, and that one leaks. Medium and Large are past the line; Small on the M4 isn't. A small standalone test leaks once two 3-point corner marks take its drawing past the line. Neither `rendersAsynchronously` nor `.drawingGroup()` helps. At the same size, SwiftUI shapes and text, a Core Graphics view and Core Animation layers don't leak.
+  - **The leak drives the CPU climb** (Nov 7). Two Small and two Medium copies of the same build ran side by side for 65 minutes on the M4:
 
-  ```bash
-  sample CPUMeter 5
-  ```
+    | Copy | CPU, first 10 min | CPU, last 10 min | Trend per hour | Timers, minute 4 → 65 |
+    |---|---|---|---|---|
+    | Small 1 | 0.728% | 0.733% | +0.01 | 54 → 53 |
+    | Small 2 | 0.745% | 0.742% | −0.01 | 53 → 54 |
+    | Medium 1 | 0.745% | 0.882% | +0.16 | 296 → 3,955 |
+    | Medium 2 | 0.695% | 0.815% | +0.14 | 309 → 3,964 |
 
-- **Done when:** CPU and memory are recorded for both Macs, next to DriveSpeed's 0.75% of one core, and memory is flat after warm-up. Results go here and in the README.
+    Resident memory grew 1.3 and 1.6 MB at Medium, and 0.1 and 0.2 MB at Small. The samples at the end put Medium's extra time in the system's timer bookkeeping and in the renderer's surface pool.
+  - Chris chose to move the drawing to Core Animation, §6's fallback (requirements v1.16, Nov 7, 2026). 5.3 builds it, and these runs are then repeated. The scripts, the copy of the app with switches, the small test and every result are kept in `local-tests/inc5.2/`.
 
-### Increment 5.3 — Accuracy
+### Increment 5.3 — Core Animation drawing
+- **Goal:** The same meter, drawn with Core Animation, so no redraw leaves anything behind at any size. Nothing on screen changes. (Requirements §6 v1.16; FR-6, FR-7, FR-8d, FR-9, FR-10, FR-11, FR-27, FR-28c, NFR-1, NFR-3, NFR-5)
+- **Build:**
+  - **First, a probe.** 5.2's tests put their layers straight into an AppKit window, not SwiftUI's. So a throwaway copy of the app shows a bare layer view, with a few bars and figures changing every second, inside SwiftUI's window at Large, and its timer count must stay flat for 10 minutes. No app code changes for this.
+  - `MeterView.swift`: the `Canvas` gives way to a view holding Core Animation layers, §6's fifth use of AppKit. It has a layer for each track and for each bar's system and user parts, clipped to the track's rounded corners, layers for the key's dots, and text layers for the overall figure, the key, the group labels and the per-core figures, in monospaced digits.
+    - `MeterDrawing`'s functions stay as they are and still place everything, so the bar geometry and the text don't change, and their checks from 2.2 and 2.3 still apply.
+    - An update changes only the layers whose values changed, with Core Animation's own animation turned off (requirements §8 item 7).
+    - The colors are set again when the appearance changes, and at once as a color is picked (FR-28c). Text is drawn at the scale of the window's display.
+  - `CPUMeterApp.swift` shouldn't need to change, because the new view takes the same layout, sample and colors. If it does, Claude says so first.
+- **Verify:**
+  - Headless: the saved geometry checks, and 2.2–2.4's pixel checks and contact sheets, run against the layers rendered to images at scale 1.0. That covers all 19 layouts and the fallback row, at all three sizes, in Dark and Light. Each image is compared with the `Canvas` meter's at the same readings: the bars should match pixel for pixel, and the text to within a pixel. Text at scale 2 is checked headlessly too, and on a Retina display in 5.5.
+  - The running Release app on the M4, at each size: no `Canvas` layer in the window, a timer count that stays flat for 10 minutes, and no animation left on any layer after an update.
+  - Chris compares the window with the `Canvas` build and with the design canvas, at all three sizes and in both appearances. Chris also runs the test loads, picks colors, and switches the appearance while it runs. Then the same at all three sizes on the M1, since every Mac draws the new meter.
+- **Done when:** Chris confirms the meter looks as it did on both Mac minis, and the timer count is flat at every size. 5.2's runs are then repeated, which completes 5.2.
+
+### Increment 5.4 — Accuracy
 - **Goal:** Confirm the readings on both Macs. (NFR-6)
 - **Build:** None expected.
 - **Verify:** On each Mac mini, run 1, 2, 4 and all-core busy loops from a quiet start. Each should raise the overall figure by about N/T of the total, and the readings should follow Activity Monitor at the same refresh rate. The two never sample at the same instant, so this compares trends, not exact numbers.
 - **Done when:** Both Macs follow the expected rise, and the results are recorded.
 
-### Increment 5.4 — M3 MacBook Air check
+### Increment 5.5 — M3 MacBook Air check
 - **Goal:** The two things only the Air can show. (Requirements §6, Test hardware)
 - **Build:** None expected.
 - **Verify:** Chris runs the Release build on battery for about an hour and reads CPUMeter's line in Activity Monitor's Energy tab. Chris also checks the window on the built-in display: the notch, and text on a Retina screen.
 - **Done when:** The results are recorded, and nothing looks wrong near the notch.
 
-### Increment 5.5 — Traceability, README and release
+### Increment 5.6 — Traceability, README and release
 - **Goal:** Every requirement is met, deferred, or explicitly removed. → **v1.0**
 - **Build:** Walk the requirements top to bottom against the running app and record the evidence, as DriveSpeed's 5.4 did. Fix any drift between the requirements, the design document and the code. Rewrite the README, including exactly what was and wasn't tested. The "Note From The Human" section stays Chris's.
 - **Verify:** Each requirement is checked off with evidence.
@@ -695,17 +728,17 @@ Phases 0–4 were confirmed on macOS 27.0.1. After Increment 4.2, Chris updated 
 | FR-3d | 0.3 |
 | FR-4 | 0.1 |
 | FR-5 | 0.1, 5.1 |
-| FR-6 | 1.2, 2.2 |
-| FR-7 | 2.2 |
+| FR-6 | 1.2, 2.2, 5.3 |
+| FR-7 | 2.2, 5.3 |
 | FR-8 | 1.2 |
 | FR-8a | 1.2, 2.3, 2.4 |
 | FR-8b | 1.2, 1.3 |
 | FR-8c | 1.2, 2.3, 2.4, 4.2 |
-| FR-8d | 2.1, 2.2, 2.3 |
+| FR-8d | 2.1, 2.2, 2.3, 5.3 |
 | FR-8e | 2.3, 2.4 |
-| FR-9 | 1.3, 2.2, 2.3 |
-| FR-10 | 1.3, 2.2, 2.3 |
-| FR-11 | 2.1, 2.2, 2.3, 2.4 |
+| FR-9 | 1.3, 2.2, 2.3, 5.3 |
+| FR-10 | 1.3, 2.2, 2.3, 5.3 |
+| FR-11 | 2.1, 2.2, 2.3, 2.4, 5.3 |
 | FR-12 | 1.3 |
 | FR-13 | 1.1 |
 | FR-14 | 1.3, 2.2 |
@@ -721,14 +754,14 @@ Phases 0–4 were confirmed on macOS 27.0.1. After Increment 4.2, Chris updated 
 | FR-24 | 0.2, 3.2, 3.3 |
 | FR-24a | 3.1, 3.4 |
 | FR-25, FR-26 | 0.2 |
-| FR-27 | 2.2, 2.3 |
-| FR-28, FR-28a–e | 3.3 |
-| NFR-1 | 1.1, 4.2, 5.2 |
+| FR-27 | 2.2, 2.3, 5.3 |
+| FR-28, FR-28a–e | 3.3, 5.3 |
+| NFR-1 | 1.1, 4.2, 5.2, 5.3 |
 | NFR-2 | 1.1 *(pre-verified Nov 1)* |
-| NFR-3 | 2.2, 2.3 |
+| NFR-3 | 2.2, 2.3, 5.3 |
 | NFR-4 | 4.1, 4.2 |
-| NFR-5 | 2.2, 3.3 |
-| NFR-6 | 1.3, 5.3 |
+| NFR-5 | 2.2, 3.3, 5.3 |
+| NFR-6 | 1.3, 5.4 |
 
 ---
 
