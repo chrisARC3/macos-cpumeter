@@ -24,6 +24,19 @@ privileges.
 - **Adjustable refresh rate**, 1–5 seconds, remembered across launches.
 - **Keep on Top**, on by default, also remembered.
 
+## Measured cost
+
+Measured over an hour after a 5-minute warm-up, at a 1-second refresh, on macOS 27.2
+(November 2026):
+
+| Mac | CPU | Memory footprint |
+|---|---|---|
+| M4 Mac mini | 0.37% of one core | about 26 MB |
+| 2020 M1 Mac mini | 0.57% of one core | about 25 MB |
+
+These figures are for the Medium size. CPU and memory stay level across the hour, and
+on the M4, Small, Medium and Large cost the same.
+
 ## Requirements
 
 - **macOS 27** or later

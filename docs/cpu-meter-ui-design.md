@@ -162,4 +162,4 @@ Core counts other than 8 and 10 can only be checked with simulated data. Increme
 
 ---
 
-*Next step: Increment 5.2's footprint runs again on both Mac minis, now that Increment 5.3 draws this page's meter with Core Animation in place of `Canvas` (requirements v1.16). 5.3 was confirmed on the M4 and the M1 on Nov 7, 2026, with no change to this page: side by side with `Canvas`, every bar, color and line of text came out in the same place.*
+*Next step: requirements v1.17, Chris's free sizing, chosen on Nov 8, 2026: any size from Small up, as a plain zoom of Small, dragged from any edge or corner. This page's sizes and resizing (§2), menus (§5) and measured fit (§7) change with it. Increment 5.2, Footprint, was confirmed on the M4 and the M1 on Nov 8, 2026, with no change to this page.*
