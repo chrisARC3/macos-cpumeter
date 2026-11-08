@@ -1,11 +1,11 @@
 # CPUMeter — Incremental Build Plan
 
-**Version:** 1.9
-**Changelog:** v1.9 (Nov 7, 2026) — Increment 5.2's first runs found that SwiftUI's `Canvas` leaves a system timer behind on every redraw at Medium and Large, so CPU use climbs for as long as the app runs, and Chris chose Core Animation (requirements v1.16). The new **5.3, Core Animation drawing**, redraws the meter with nothing on screen changing. Accuracy, the M3 MacBook Air check and the release, which were 5.3, 5.4 and 5.5, are now **5.4**, **5.5** and **5.6**. 5.2 records its first runs and the cause, and is completed by repeating its runs after 5.3, now also with Small, Medium and Large side by side on the M4, and with a definition of level (Claude's proposal). The Files table and coverage map are updated to match. v1.8 (Nov 6, 2026) — adds the **macOS 27.2 recheck** between Phases 4 and 5, after Chris updated both Mac minis from macOS 27.0.1 to 27.2: Claude reruns the automated checks on the M4, and Chris does a short manual pass on each Mac, in place of repeating every test. No increment changed. v1.7 (Nov 6, 2026) — Increment 4.1 also times the first update after a pause: 1 second after the window is visible again, then at the chosen rate (requirements v1.14, FR-17). v1.6 (Nov 6, 2026) — after Increment 3.3, Chris's new keyboard shortcuts (requirements v1.13) get their own increment, the new **3.4, Keyboard shortcuts**, which now ends Phase 3: ⌘1 to ⌘5 for the refresh rates, and ⇧⌘S, ⇧⌘M and ⇧⌘L for the sizes in place of ⌘1, ⌘2 and ⌘3. 3.3 still took Phase 3's M1 pass, and 3.4 needs none. 3.1's Results stay as they were, a record of ⌘1–⌘3. v1.5 (Nov 5, 2026) — after Increment 3.2's first test, Chris's change to FR-18d (requirements v1.12): a new rate updates the meter at once, never from less than 1 second, rather than restarting the interval. 3.2's Build and Verify are updated, and 3.2 stays one increment. v1.4 (Nov 5, 2026) — after Increment 2.4, Chris's size shortcuts (requirements v1.11) get their own increment, the new **3.1, Size shortcuts**. Refresh Rate and Colors, which were 3.1 and 3.2, are now **3.2** and **3.3**, and Colors still completes Phase 3. v1.3 (Nov 5, 2026) — Increment 2.3 also builds requirements v1.10's wording: the overall figure reads "All cores: 42%", and the group labels take a colon. v1.2 (Nov 5, 2026) — after Increment 2.2, Chris's design changes (requirements v1.9) get their own increment, the new **2.3, design changes**. The old 2.3, other core counts, is now **2.4** and still completes Phase 2; earlier Results that point to it say 2.4. 3.2's menu lists System Color… first, and 4.2 compares the group averages too. v1.1 (Nov 4, 2026) — Increment 0.2's first test found two places where SwiftUI falls short, so requirements v1.7 adds direct window access and 0.2 now uses it, through the new `WindowAccess.swift`. Added Increment 0.3, snap resizing, at Chris's request. It now completes Phase 0 and takes Phase 0's M1 pass. After 0.2's second test, the scene drops `.windowLevel`, and File's Close replaces macOS's own Close group. v1.0 (Nov 2, 2026) — approved by Chris.
-**Date:** November 7, 2026
-**Companion to:** `cpu-meter-requirements.md` (v1.16) and `cpu-meter-ui-design.md`
+**Version:** 1.10
+**Changelog:** v1.10 (Nov 8, 2026) — Chris's free sizing (requirements v1.17): the window can be any size from Small up, a plain zoom of Small, dragged from any edge or corner. The new **5.4, Free sizing**, starts with a probe that checks SwiftUI leaves the window's shape and size limits alone, and then builds it. Accuracy, the M3 MacBook Air check and the release, which were 5.4, 5.5 and 5.6, are now **5.5**, **5.6** and **5.7**, and the Air check adds a dragged size. NFR-1 at the new sizes is checked with a 10-minute run at three sizes, and 5.2's hour is repeated only if that run differs from 5.3's (Claude's proposal). The Files table and coverage map are updated to match. v1.9 (Nov 7, 2026) — Increment 5.2's first runs found that SwiftUI's `Canvas` leaves a system timer behind on every redraw at Medium and Large, so CPU use climbs for as long as the app runs, and Chris chose Core Animation (requirements v1.16). The new **5.3, Core Animation drawing**, redraws the meter with nothing on screen changing. Accuracy, the M3 MacBook Air check and the release, which were 5.3, 5.4 and 5.5, are now **5.4**, **5.5** and **5.6**. 5.2 records its first runs and the cause, and is completed by repeating its runs after 5.3, now also with Small, Medium and Large side by side on the M4, and with a definition of level (Claude's proposal). The Files table and coverage map are updated to match. v1.8 (Nov 6, 2026) — adds the **macOS 27.2 recheck** between Phases 4 and 5, after Chris updated both Mac minis from macOS 27.0.1 to 27.2: Claude reruns the automated checks on the M4, and Chris does a short manual pass on each Mac, in place of repeating every test. No increment changed. v1.7 (Nov 6, 2026) — Increment 4.1 also times the first update after a pause: 1 second after the window is visible again, then at the chosen rate (requirements v1.14, FR-17). v1.6 (Nov 6, 2026) — after Increment 3.3, Chris's new keyboard shortcuts (requirements v1.13) get their own increment, the new **3.4, Keyboard shortcuts**, which now ends Phase 3: ⌘1 to ⌘5 for the refresh rates, and ⇧⌘S, ⇧⌘M and ⇧⌘L for the sizes in place of ⌘1, ⌘2 and ⌘3. 3.3 still took Phase 3's M1 pass, and 3.4 needs none. 3.1's Results stay as they were, a record of ⌘1–⌘3. v1.5 (Nov 5, 2026) — after Increment 3.2's first test, Chris's change to FR-18d (requirements v1.12): a new rate updates the meter at once, never from less than 1 second, rather than restarting the interval. 3.2's Build and Verify are updated, and 3.2 stays one increment. v1.4 (Nov 5, 2026) — after Increment 2.4, Chris's size shortcuts (requirements v1.11) get their own increment, the new **3.1, Size shortcuts**. Refresh Rate and Colors, which were 3.1 and 3.2, are now **3.2** and **3.3**, and Colors still completes Phase 3. v1.3 (Nov 5, 2026) — Increment 2.3 also builds requirements v1.10's wording: the overall figure reads "All cores: 42%", and the group labels take a colon. v1.2 (Nov 5, 2026) — after Increment 2.2, Chris's design changes (requirements v1.9) get their own increment, the new **2.3, design changes**. The old 2.3, other core counts, is now **2.4** and still completes Phase 2; earlier Results that point to it say 2.4. 3.2's menu lists System Color… first, and 4.2 compares the group averages too. v1.1 (Nov 4, 2026) — Increment 0.2's first test found two places where SwiftUI falls short, so requirements v1.7 adds direct window access and 0.2 now uses it, through the new `WindowAccess.swift`. Added Increment 0.3, snap resizing, at Chris's request. It now completes Phase 0 and takes Phase 0's M1 pass. After 0.2's second test, the scene drops `.windowLevel`, and File's Close replaces macOS's own Close group. v1.0 (Nov 2, 2026) — approved by Chris.
+**Date:** November 8, 2026
+**Companion to:** `cpu-meter-requirements.md` (v1.17) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Chris then asked for some design changes and new wording, recorded in requirements v1.9 and v1.10, and Increment 2.3 (design changes), which builds them, was confirmed on the M4 the same day. Increment 2.4 (other core counts) was confirmed on the M4 and the M1 the same day, completing Phase 2. Chris then asked for keyboard shortcuts for the three sizes, recorded in requirements v1.11, and Increment 3.1 (size shortcuts), which builds them, was confirmed on the M4 the same day. Increment 3.2 (Refresh Rate) was confirmed on the M4 the same day, after Chris's change to how a new rate takes effect (requirements v1.12), as its Results record. Increment 3.3 (Colors) was confirmed on the M4 and the M1 on Nov 6, 2026, with Phase 3's M1 pass. Chris then asked for new keyboard shortcuts, recorded in requirements v1.13, and Increment 3.4 (keyboard shortcuts), which builds them, was confirmed on the M4 the same day, completing Phase 3. Increment 4.1 (pause when not visible), with requirements v1.14's timing, was confirmed on the M4 the same day, starting Phase 4. Increment 4.2 (failures, sleep and needless redraws) was confirmed on the M4 and the M1 the same day, completing Phase 4 with its M1 pass. Chris then updated both Mac minis from macOS 27.0.1 to 27.2, and the macOS 27.2 recheck, Claude's automated checks on the M4 and Chris's short pass on each Mac, was confirmed the same day. Increment 5.2 (footprint)'s first runs, on Nov 6–7, 2026, found that SwiftUI's `Canvas` leaks a system timer on every redraw at Medium and Large, so CPU use climbs. Chris chose to move the drawing to Core Animation (requirements v1.16), which the new Increment 5.3 builds, and 5.2's runs are repeated after it. Increment 5.3 (Core Animation drawing) was confirmed on the M4 and the M1 on Nov 7, 2026: the meter looks as it did, and its timer count stays flat at every size. Increment 5.2's runs were repeated on Nov 8, 2026, and Chris confirmed 5.2 (footprint) the same day: CPU and memory stay level on both Macs, at 0.370% of one core on the M4 and 0.570% on the M1 at Medium, and the three sizes cost the same. Next is Chris's free sizing, chosen the same day, a plain zoom from Small, which requirements v1.17 will add, with a new increment before 5.4. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Chris then asked for some design changes and new wording, recorded in requirements v1.9 and v1.10, and Increment 2.3 (design changes), which builds them, was confirmed on the M4 the same day. Increment 2.4 (other core counts) was confirmed on the M4 and the M1 the same day, completing Phase 2. Chris then asked for keyboard shortcuts for the three sizes, recorded in requirements v1.11, and Increment 3.1 (size shortcuts), which builds them, was confirmed on the M4 the same day. Increment 3.2 (Refresh Rate) was confirmed on the M4 the same day, after Chris's change to how a new rate takes effect (requirements v1.12), as its Results record. Increment 3.3 (Colors) was confirmed on the M4 and the M1 on Nov 6, 2026, with Phase 3's M1 pass. Chris then asked for new keyboard shortcuts, recorded in requirements v1.13, and Increment 3.4 (keyboard shortcuts), which builds them, was confirmed on the M4 the same day, completing Phase 3. Increment 4.1 (pause when not visible), with requirements v1.14's timing, was confirmed on the M4 the same day, starting Phase 4. Increment 4.2 (failures, sleep and needless redraws) was confirmed on the M4 and the M1 the same day, completing Phase 4 with its M1 pass. Chris then updated both Mac minis from macOS 27.0.1 to 27.2, and the macOS 27.2 recheck, Claude's automated checks on the M4 and Chris's short pass on each Mac, was confirmed the same day. Increment 5.2 (footprint)'s first runs, on Nov 6–7, 2026, found that SwiftUI's `Canvas` leaks a system timer on every redraw at Medium and Large, so CPU use climbs. Chris chose to move the drawing to Core Animation (requirements v1.16), which the new Increment 5.3 builds, and 5.2's runs are repeated after it. Increment 5.3 (Core Animation drawing) was confirmed on the M4 and the M1 on Nov 7, 2026: the meter looks as it did, and its timer count stays flat at every size. Increment 5.2's runs were repeated on Nov 8, 2026, and Chris confirmed 5.2 (footprint) the same day: CPU and memory stay level on both Macs, at 0.370% of one core on the M4 and 0.570% on the M1 at Medium, and the three sizes cost the same. Chris then chose free sizing, a plain zoom of Small dragged from any edge or corner, and approved requirements v1.17 for it the same day, then the UI design's revision for it, and the design canvas was updated to match. This plan's v1.10 adds **Increment 5.4, free sizing**, with a probe first, so Accuracy, the M3 MacBook Air check and the release are now 5.5, 5.6 and 5.7. Chris approved v1.10 the same day. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -77,18 +77,18 @@ The "Efficiency cores only" load is what proves the group labels are right. A ba
 |---|---|---|
 | `CPUMeter/CPUMeter.xcodeproj` | Project, made from DriveSpeed's | 0.1 |
 | `CPUMeterApp.swift` | `Window` scene, title, menus, the size and Keep on Top settings | 0.1 |
-| `WindowAccess.swift` | The one place CPUMeter reaches its window: level, staying on screen, snapping | 0.2 |
-| `MeterSize.swift` | The three sizes and the snap rule, testable on their own | 0.3 |
+| `WindowAccess.swift` | The one place CPUMeter reaches its window: level, staying on screen, and snapping until 5.4, then its shape and size limits | 0.2, 5.4 |
+| `MeterSize.swift` | The three sizes and the snap rule, testable on their own; from 5.4, the presets as scales and the saved scale | 0.3, 5.4 |
 | `CoreCounters.swift` | Counter read and wrapping tick change | 1.1 |
 | `CoreTopology.swift` | Core groups, names and order; the fallback | 1.2 |
 | `CPUSampler.swift` | Timer, refresh rates, baseline, percentages, pause and resume | 1.3 |
-| `MeterLayout.swift` | The width rule and the design document's numbers | 2.1 |
+| `MeterLayout.swift` | The width rule and the design document's numbers, Small's alone from 5.4 | 2.1, 5.4 |
 | `MeterView.swift` | The meter's drawing: `Canvas` until 5.3, then Core Animation layers | 2.2, 5.3 |
 | `SimulatedCores.swift` | Other core counts, Debug builds only | 2.4 |
 | `BarColors.swift` | Chosen colors and the system color chooser | 3.3 |
 | `Assets.xcassets/AppIcon` | App icon, from Chris's artwork | 5.1 |
 | `design/AllIcons.jpeg` | Chris's original icon sheet, which the AppIcon images are cut from | 5.1 |
-| `README.md` | Rewritten once the app exists | 5.6 |
+| `README.md` | Rewritten once the app exists | 5.7 |
 | `NEXT-SESSION-HANDOFF.md` | Working note, local and gitignored | As needed |
 
 ---
@@ -641,7 +641,7 @@ Phases 0–4 were confirmed on macOS 27.0.1. After Increment 4.2, Chris updated 
 
 ### Increment 5.1 — App icon
 - **Goal:** Chris's icon in the Dock and in Finder. (FR-5)
-- **Build:** Chris creates the icon separately and tells Claude when it's finished. Claude then adds it to `Assets.xcassets/AppIcon`. This increment runs whenever the icon is ready and doesn't hold up any other increment, but the v1.0 release in 5.6 includes it. *(Chris's instruction, Nov 2, 2026.)*
+- **Build:** Chris creates the icon separately and tells Claude when it's finished. Claude then adds it to `Assets.xcassets/AppIcon`. This increment runs whenever the icon is ready and doesn't hold up any other increment, but the v1.0 release in 5.7 includes it. *(Chris's instruction, Nov 2, 2026.)*
 - **Verify:** Chris checks it in the Dock and in Finder.
 - **Done when:** Chris approves it.
 - **Result (Nov 4, 2026):** Chris's artwork arrived as one sheet of six drawings on a dark background, labelled 512 down to 16. It's kept as `design/AllIcons.jpeg`. Each drawing was cut out of the background, and each icon size uses the drawing labelled for it, with the 1024-pixel size taken from the largest. Every drawing is larger than its label, so nothing was enlarged. As drawn, the icon was put inside a gray rounded square by macOS 27, because the chip's outline isn't Apple's standard shape. Chris chose a version stretched to Apple's 824-of-1024 tile and clipped to its corners. That trims the outer pin tips and leaves the shadow to macOS, which then shows the icon full size. `xcodebuild` is clean. The first run from Xcode still showed the blank icon, because macOS caches an app's icon by the `.app` folder's path and date, and an Xcode rebuild doesn't change the folder's date. Touching the built `.app` fixed it. **Confirmed by Chris** (Nov 4, 2026): the new icon shows in the Dock and the About box.
@@ -720,7 +720,7 @@ Phases 0–4 were confirmed on macOS 27.0.1. After Increment 4.2, Chris updated 
     - The colors are set again when the appearance changes, and at once as a color is picked (FR-28c). Text is drawn at the scale of the window's display.
   - `CPUMeterApp.swift` shouldn't need to change, because the new view takes the same layout, sample and colors. If it does, Claude says so first.
 - **Verify:**
-  - Headless: the saved geometry checks, and 2.2–2.4's pixel checks and contact sheets, run against the layers rendered to images at scale 1.0. That covers all 19 layouts and the fallback row, at all three sizes, in Dark and Light. Each image is compared with the `Canvas` meter's at the same readings: the bars should match pixel for pixel, and the text to within a pixel. Text at scale 2 is checked headlessly too, and on a Retina display in 5.5.
+  - Headless: the saved geometry checks, and 2.2–2.4's pixel checks and contact sheets, run against the layers rendered to images at scale 1.0. That covers all 19 layouts and the fallback row, at all three sizes, in Dark and Light. Each image is compared with the `Canvas` meter's at the same readings: the bars should match pixel for pixel, and the text to within a pixel. Text at scale 2 is checked headlessly too, and on a Retina display in 5.6.
   - The running Release app on the M4, at each size: no `Canvas` layer in the window, a timer count that stays flat for 10 minutes, and no animation left on any layer after an update.
   - Chris compares the window with the `Canvas` build and with the design canvas, at all three sizes and in both appearances. Chris also runs the test loads, picks colors, and switches the appearance while it runs. Then the same at all three sizes on the M1, since every Mac draws the new meter.
 - **Done when:** Chris confirms the meter looks as it did on both Mac minis, and the timer count is flat at every size. 5.2's runs are then repeated, which completes 5.2.
@@ -739,7 +739,7 @@ Phases 0–4 were confirmed on macOS 27.0.1. After Increment 4.2, Chris updated 
   - **Checks on the M4:**
     - Debug and Release build with no warnings. The saved checks pass with the counts they had before: 2.3's geometry (14,554,734), 2.4's logic (3,463,960) and 4.2's pure checks (63).
     - **Compared with the `Canvas` build in real windows on the M4's screen (scale 1):** the M4's layout, the 10-core fallback row and 32 cores, at all three sizes, Dark and Light, each showing dashes, mixed readings, full load, thin parts with a core that has no reading, chosen colors, then dashes again. Each kind of meter stayed in one view throughout, so these are updates, not fresh drawings. 108 cases, all pass. Nothing moved. The only differences are anti-aliasing: up to 24 of 255 in any channel, except on the tracks' rounded corners and the key's dots, which each draw rounds slightly differently (up to 63, at Small's 2-point corners).
-    - **The same off screen at scales 1 and 2,** for all 19 layouts and both fallback rows, through the same six states: 1,512 cases, all pass. No pixel differs by more than 29 of 255, or 20 away from the curves. Scale 2 is checked on a Retina screen in 5.5.
+    - **The same off screen at scales 1 and 2,** for all 19 layouts and both fallback rows, through the same six states: 1,512 cases, all pass. No pixel differs by more than 29 of 255, or 20 away from the curves. Scale 2 is checked on a Retina screen in 5.6.
     - **The two Debug builds side by side under the simulated full load,** at all three sizes in Dark and Light, and the fallback row at Medium: screenshots of the windows differ only in anti-aliasing, as above.
     - **The running app's layers** (the Debug build, under the moving load, at Large and Small): no `Canvas` drawing layer in the window, 15 text layers (10 figures, 2 labels, 2 key words and the overall figure), and no animation on any layer.
     - **The Release build for 10 minutes** at each size side by side, each with a 1-second refresh, Keep on Top on and its own test bundle ID:
@@ -753,19 +753,60 @@ Phases 0–4 were confirmed on macOS 27.0.1. After Increment 4.2, Chris updated 
       The `Canvas` build used about 0.65–0.77% at Medium in 5.2. Ten minutes is too short to judge memory; 5.2's repeated runs do that.
   - **Confirmed by Chris on the M4 and the M1 (Nov 7, 2026): "All pass."** On the M4 from Xcode, and on the M1 from `CPUMeter-5.3-1c1fec1-dirty.zip` (the Release build above), Chris checked all three sizes against the old look, the figures changing under a test load with no fading, colors picked and reset in View → Colors, Light and Dark switched while running, and dragging the window between sizes.
 
-### Increment 5.4 — Accuracy
+### Increment 5.4 — Free sizing
+- **Goal:** The window can be any size from Small up, dragged from any edge or corner, and the meter is Small enlarged at every size. (Requirements v1.17: FR-3, FR-3a–FR-3d, FR-8e, FR-11, FR-20, FR-22, FR-24, NFR-1, NFR-3; UI design §2, §5 and §8 items 5, 7, 8 and 11–13) *(Added in v1.10, at Chris's request, Nov 8, 2026.)*
+- **Build:**
+  - **First, a probe.** No app code changes for this. A throwaway copy of the app drops the snap and sets three things on SwiftUI's window: `contentAspectRatio` to Small's content size, the minimum content size to Small, and the maximum to the largest size of that shape that fits the screen. Its meter is drawn roughly, at the window's scale. The probe checks:
+    - **that SwiftUI leaves the shape and the limits alone** through scene updates: size switches, Keep on Top, a refresh-rate change, a color pick and the meter's own updates. In 0.2, SwiftUI set the window level again on every scene update, and `.windowResizability(.contentSize)` sets the window's size limits from its content, so either could undo them (requirements §8 item 20);
+    - **which edges stay in place** for each edge and corner dragged, and how macOS rounds the height during a drag (UI design §2);
+    - that the window stops at both limits, and that the meter keeps up while it's redrawn at every size during a drag;
+    - what the green button, Window → Fill and the tiling layouts do with a window whose shape is fixed (requirements §8 items 21 and 22).
+
+    Claude reports the results before any app code. If SwiftUI overrides the shape, the window takes its shape when the drag ends instead (requirements §8 item 20). If macOS keeps different edges in place, the UI design records what it does. The probe and its results are kept in `local-tests/inc5.4/probe/`.
+  - **Then the code.** Claude lists the files and waits for Chris's go-ahead. Expected:
+    - `MeterSize.swift`: Small, Medium and Large become scales of 1, 1.5 and 2. A size comes from a scale by the UI design's rounding rule (§8 item 11). The saved setting is the scale, and a size saved by an earlier build carries over as its preset (FR-20). The snap rule goes.
+    - `MeterLayout.swift`: only Small's numbers. The width rule and "Perf" are worked out once, at Small (FR-3b, FR-8e), and a layout at any other scale is Small's times that scale.
+    - `MeterView.swift`: the layers at any scale, with the text sizes, corner radii and the 1-point gap scaled, and pixels snapped as now. The layer tree is rebuilt when the scale changes, as it already is for the layout and the display scale.
+    - `WindowAccess.swift`: the shape and the limits in place of the snap, with the limits following the window's screen (UI design §8 item 13). The presets keep the top-left corner, and FR-22's on-screen rule applies when a drag ends. A preset, or a saved size at launch, that doesn't fit takes the largest size that does. The green button zooms to Large and back, and the new scale is passed back to be saved.
+    - `CPUMeterApp.swift`: the saved scale in place of the saved size, View → Size checked only at a preset's width (FR-24), and the meter's frame from Small's size up.
+- **Verify:**
+  - **Headless:**
+    - The width rule and layouts for all 19 core layouts and both fallback rows, at the presets and at sizes between and beyond them, up to the largest size on the M4's screen. Medium and Large match requirements §6, "Perf" appears exactly where Small has it, every label fits within its own group at its widest, the figures stay separate at full load, and the top row's spare is measured. UI design §7 expects at least 41.0 points at Medium and 54.6 at Large.
+    - Text widths at the presets and the largest size, to confirm that text which fits at Small fits at every size (UI design §7). The results go into UI design §7.
+    - The rounding rule and the saved scale: every preset and a range of dragged widths come back exactly from their saved scale, and a Small, Medium or Large saved by an earlier build carries over.
+    - The layers rendered at Small and at a few other scales, at display scales 1 and 2: positions match Small's layout times the scale, and Small matches 5.3's renders.
+    - The saved checks, 2.3's geometry, 2.4's logic and 4.2's pure checks, adapted where they hold Medium's and Large's old numbers. Claude says what changed in each.
+  - **The running app on the M4, Claude's checks:**
+    - Drags simulated with the live-resize notifications around a frame change, as in 0.3, for each edge and corner: the shape is kept, the edges UI design §2 names stay in place, the limits hold, and the new scale is saved.
+    - The presets and their shortcuts keep the top-left corner, near the screen's edges too. A preset or a saved size larger than the screen takes the largest size that fits. The green button and the checkmark.
+    - A 10-minute Release run at Small, a dragged size and the largest size, side by side, as in 5.3: the timer count stays flat, and CPU is near 5.3's 0.37–0.38% of one core. If it isn't, 5.2's hour is repeated. *(Claude's proposal.)*
+    - CPU during a drag, since the meter is redrawn at each size (UI design §8 item 8).
+  - **Chris on the M4:**
+    - a real drag from each edge and corner, down to Small and up to the largest size, and drags near the screen's edges;
+    - the presets, their shortcuts and the checkmark;
+    - the green button, from below Large and from above it;
+    - Window → Fill and a tiling layout;
+    - the Dock hidden and shown while the window is at its largest;
+    - a relaunch at a dragged size;
+    - the test loads, Light and Dark, and a color pick at a large size;
+    - a comparison with the design canvas.
+
+    Then a shorter pass on the M1, since every Mac draws the new sizes: a drag, the presets and a relaunch.
+- **Done when:** Chris confirms the drags and the presets on the M4 and the M1, the widths match requirements §6, and the timer count stays flat at every size tested.
+
+### Increment 5.5 — Accuracy
 - **Goal:** Confirm the readings on both Macs. (NFR-6)
 - **Build:** None expected.
 - **Verify:** On each Mac mini, run 1, 2, 4 and all-core busy loops from a quiet start. Each should raise the overall figure by about N/T of the total, and the readings should follow Activity Monitor at the same refresh rate. The two never sample at the same instant, so this compares trends, not exact numbers.
 - **Done when:** Both Macs follow the expected rise, and the results are recorded.
 
-### Increment 5.5 — M3 MacBook Air check
+### Increment 5.6 — M3 MacBook Air check
 - **Goal:** The two things only the Air can show. (Requirements §6, Test hardware)
 - **Build:** None expected.
-- **Verify:** Chris runs the Release build on battery for about an hour and reads CPUMeter's line in Activity Monitor's Energy tab. Chris also checks the window on the built-in display: the notch, and text on a Retina screen.
+- **Verify:** Chris runs the Release build on battery for about an hour and reads CPUMeter's line in Activity Monitor's Energy tab. Chris also checks the window on the built-in display: the notch, and text on a Retina screen, at the presets and at a dragged size between them. *(The dragged size added in v1.10.)*
 - **Done when:** The results are recorded, and nothing looks wrong near the notch.
 
-### Increment 5.6 — Traceability, README and release
+### Increment 5.7 — Traceability, README and release
 - **Goal:** Every requirement is met, deferred, or explicitly removed. → **v1.0**
 - **Build:** Walk the requirements top to bottom against the running app and record the evidence, as DriveSpeed's 5.4 did. Fix any drift between the requirements, the design document and the code. Rewrite the README, including exactly what was and wasn't tested. The "Note From The Human" section stays Chris's.
 - **Verify:** Each requirement is checked off with evidence.
@@ -779,10 +820,10 @@ Phases 0–4 were confirmed on macOS 27.0.1. After Increment 4.2, Chris updated 
 |---|---|
 | FR-1 | 0.1 |
 | FR-2 | 0.2 |
-| FR-3, FR-3a | 0.2, 0.3, 3.1, 3.4 |
-| FR-3b | 2.1, 2.3, 2.4 |
-| FR-3c | 2.1 |
-| FR-3d | 0.3 |
+| FR-3, FR-3a | 0.2, 0.3, 3.1, 3.4, 5.4 |
+| FR-3b | 2.1, 2.3, 2.4, 5.4 |
+| FR-3c | 2.1, 5.4 |
+| FR-3d | 0.3, 5.4 |
 | FR-4 | 0.1 |
 | FR-5 | 0.1, 5.1 |
 | FR-6 | 1.2, 2.2, 5.3 |
@@ -792,10 +833,10 @@ Phases 0–4 were confirmed on macOS 27.0.1. After Increment 4.2, Chris updated 
 | FR-8b | 1.2, 1.3 |
 | FR-8c | 1.2, 2.3, 2.4, 4.2 |
 | FR-8d | 2.1, 2.2, 2.3, 5.3 |
-| FR-8e | 2.3, 2.4 |
+| FR-8e | 2.3, 2.4, 5.4 |
 | FR-9 | 1.3, 2.2, 2.3, 5.3 |
 | FR-10 | 1.3, 2.2, 2.3, 5.3 |
-| FR-11 | 2.1, 2.2, 2.3, 2.4, 5.3 |
+| FR-11 | 2.1, 2.2, 2.3, 2.4, 5.3, 5.4 |
 | FR-12 | 1.3 |
 | FR-13 | 1.1 |
 | FR-14 | 1.3, 2.2 |
@@ -804,21 +845,22 @@ Phases 0–4 were confirmed on macOS 27.0.1. After Increment 4.2, Chris updated 
 | FR-17 | 4.1 |
 | FR-18, FR-18a–d | 3.2 |
 | FR-18e | 3.4 |
-| FR-19, FR-20 | 0.2 |
-| FR-22 | 0.2, 0.3, 3.1, 3.4 |
+| FR-19 | 0.2 |
+| FR-20 | 0.2, 5.4 |
+| FR-22 | 0.2, 0.3, 3.1, 3.4, 5.4 |
 | FR-21 | 0.1, 0.2 |
 | FR-23 | 0.1 |
-| FR-24 | 0.2, 3.2, 3.3 |
+| FR-24 | 0.2, 3.2, 3.3, 5.4 |
 | FR-24a | 3.1, 3.4 |
 | FR-25, FR-26 | 0.2 |
 | FR-27 | 2.2, 2.3, 5.3 |
 | FR-28, FR-28a–e | 3.3, 5.3 |
-| NFR-1 | 1.1, 4.2, 5.2, 5.3 |
+| NFR-1 | 1.1, 4.2, 5.2, 5.3, 5.4 |
 | NFR-2 | 1.1 *(pre-verified Nov 1)* |
-| NFR-3 | 2.2, 2.3, 5.3 |
+| NFR-3 | 2.2, 2.3, 5.3, 5.4 |
 | NFR-4 | 4.1, 4.2 |
 | NFR-5 | 2.2, 3.3, 5.3 |
-| NFR-6 | 1.3, 5.4 |
+| NFR-6 | 1.3, 5.5 |
 
 ---
 

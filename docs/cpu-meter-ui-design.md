@@ -1,9 +1,9 @@
 # CPUMeter — UI Design
 
-**Date:** November 2, 2026, revised November 6, 2026
+**Date:** November 2, 2026, revised November 8, 2026
 **Owner:** Chris
-**Status:** Approved by Chris on Nov 2, 2026, with the percent labels in §1 added at approval. Revised Nov 4, 2026, for requirements v1.7: dragging the window snaps to the three sizes (§2), File keeps Close (§5), and the green window button zooms (§8.5). Revised again the same day for requirements v1.8: §7 gives the label widths to three decimals, which the width rule uses. The window behavior is built: by Nov 4, 2026, Phase 0 had been confirmed by Chris, including the three sizes, Keep on Top, snap resizing and the menus in §5. Phase 1, the measurement behind the bars, was confirmed the same day, including the group labels in §1 on both Mac minis. Increment 2.1, confirmed on the M4 on Nov 5, 2026, works out this page's layout numbers. Increment 2.2, confirmed the same day, draws the meter from this page, and Chris found it matches the design canvas very well. **Revised Nov 5, 2026, for requirements v1.9,** with Chris's design changes after 2.2: system time at the bottom of each bar (§3), System first in the key and the Colors menu (§1, §2, §5), each group's average in its label, with "Perf" where "Performance" would widen the window (§1, §7), and no label on the fallback row, whose bars grow to fill the space (§2, §6). Revised again the same day for requirements v1.10, with Chris's wording: the overall figure reads "All cores: 42%", and the group labels take a colon (§1, §6, §7). Increment 2.3 built both revisions, and Chris confirmed it on the M4 the same day: everything looked exactly as predicted and expected. Increment 2.4 drew every Mac in the requirements' §6 from simulated cores, at all three sizes, and Chris confirmed it on the M4 and the M1 the same day. Revised again the same day for requirements v1.11, at Chris's request: View → Size shows the keyboard shortcuts ⌘1, ⌘2 and ⌘3 (§5). Increment 3.1 built them, and Chris confirmed it on the M4 the same day. Increment 3.2 built Refresh Rate (§5), and Chris confirmed it on the M4 the same day. Increment 3.3 built Colors (§4, §5), completing §5's View menu, and Chris confirmed it on the M4 and the M1 on Nov 6, 2026. **Revised Nov 6, 2026, for requirements v1.13,** at Chris's request: ⌘1 to ⌘5 choose the refresh rate, and the sizes take ⇧⌘S, ⇧⌘M and ⇧⌘L (§5). Increment 3.4 built them, and Chris confirmed it on the M4 the same day. **Requirements v1.16, Nov 7, 2026,** moves the drawing from SwiftUI `Canvas` to Core Animation, after Increment 5.2 found that `Canvas` leaks a system timer on every redraw at Medium and Large. Nothing in this page changes: Increment 5.3 draws the same meter, and Chris confirmed it on the M4 and the M1 the same day.
-**Requirements:** [cpu-meter-requirements.md](cpu-meter-requirements.md), v1.16. If the two disagree, the requirements win.
+**Status:** Approved by Chris on Nov 2, 2026, with the percent labels in §1 added at approval. Revised Nov 4, 2026, for requirements v1.7: dragging the window snaps to the three sizes (§2), File keeps Close (§5), and the green window button zooms (§8.5). Revised again the same day for requirements v1.8: §7 gives the label widths to three decimals, which the width rule uses. The window behavior is built: by Nov 4, 2026, Phase 0 had been confirmed by Chris, including the three sizes, Keep on Top, snap resizing and the menus in §5. Phase 1, the measurement behind the bars, was confirmed the same day, including the group labels in §1 on both Mac minis. Increment 2.1, confirmed on the M4 on Nov 5, 2026, works out this page's layout numbers. Increment 2.2, confirmed the same day, draws the meter from this page, and Chris found it matches the design canvas very well. **Revised Nov 5, 2026, for requirements v1.9,** with Chris's design changes after 2.2: system time at the bottom of each bar (§3), System first in the key and the Colors menu (§1, §2, §5), each group's average in its label, with "Perf" where "Performance" would widen the window (§1, §7), and no label on the fallback row, whose bars grow to fill the space (§2, §6). Revised again the same day for requirements v1.10, with Chris's wording: the overall figure reads "All cores: 42%", and the group labels take a colon (§1, §6, §7). Increment 2.3 built both revisions, and Chris confirmed it on the M4 the same day: everything looked exactly as predicted and expected. Increment 2.4 drew every Mac in the requirements' §6 from simulated cores, at all three sizes, and Chris confirmed it on the M4 and the M1 the same day. Revised again the same day for requirements v1.11, at Chris's request: View → Size shows the keyboard shortcuts ⌘1, ⌘2 and ⌘3 (§5). Increment 3.1 built them, and Chris confirmed it on the M4 the same day. Increment 3.2 built Refresh Rate (§5), and Chris confirmed it on the M4 the same day. Increment 3.3 built Colors (§4, §5), completing §5's View menu, and Chris confirmed it on the M4 and the M1 on Nov 6, 2026. **Revised Nov 6, 2026, for requirements v1.13,** at Chris's request: ⌘1 to ⌘5 choose the refresh rate, and the sizes take ⇧⌘S, ⇧⌘M and ⇧⌘L (§5). Increment 3.4 built them, and Chris confirmed it on the M4 the same day. **Requirements v1.16, Nov 7, 2026,** moves the drawing from SwiftUI `Canvas` to Core Animation, after Increment 5.2 found that `Canvas` leaks a system timer on every redraw at Medium and Large. Nothing in this page changes: Increment 5.3 draws the same meter, and Chris confirmed it on the M4 and the M1 the same day. **Revised Nov 8, 2026, for requirements v1.17,** Chris's free sizing: every size is Small enlarged, so Medium and Large take Small's numbers times 1.5 and 2 (§2, §6), the window keeps its shape while it's dragged from any edge or corner and stays where the drag ends (§2), View → Size checks a preset only when the window is exactly at it (§5), and "Perf" shows at every size where Small uses it (§1, §7). Chris approved this revision the same day, with four fixes from Claude's reread: §7's top-row spare and label fit brought up to date, one rounding rule for width and height (§2, §8 item 11), and size limits that follow the window's screen (§2, §8 item 13).
+**Requirements:** [cpu-meter-requirements.md](cpu-meter-requirements.md), v1.17. If the two disagree, the requirements win.
 **Design canvas:** https://claude.ai/artifact/UHY36UTxX5jYKkNp33nCYa (private to Chris). It holds the true-size mockups; this document holds the numbers the build uses.
 
 All dimensions are in points.
@@ -15,7 +15,7 @@ All dimensions are in points.
 From top to bottom, inside a standard title bar titled "CPUMeter 1.0":
 
 1. **Top row:** the overall figure ("All cores: 42%") on the left and the color key (System, User) on the right. *(Chris's choice; System first since Nov 5, 2026, to match the bars from the bottom up. The wording is Chris's, Nov 5, 2026; it was "CPU 42%".)*
-2. **Group labels:** one above each group of bars, left-aligned to the group. Each is the name from macOS, exactly as given, a colon and the group's average, such as "Efficiency: 24%" or "Performance: 13%", in the same form as the top row. The average has monospaced digits and room for "100%", so the name never moves. "Performance" becomes "Perf" at a size where the full label would widen the window (requirements FR-8e): on the Macs in requirements §6, only on the 10-core M4 and M5 at Small, and on the MacBook Neo at Small and Medium. The fallback row has no label (§6). *(Chris's addition; the average, "Perf" and the colon, Chris's requests of Nov 5, 2026.)*
+2. **Group labels:** one above each group of bars, left-aligned to the group. Each is the name from macOS, exactly as given, a colon and the group's average, such as "Efficiency: 24%" or "Performance: 13%", in the same form as the top row. The average has monospaced digits and room for "100%", so the name never moves. "Performance" becomes "Perf" where the full label would widen Small (requirements FR-8e), and then at every size, because every size is Small enlarged: on the Macs in requirements §6, on the 10-core M4 and M5 and on the MacBook Neo. *(Until requirements v1.17, only at Small on the M4 and M5, and at Small and Medium on the Neo.)* The fallback row has no label (§6). *(Chris's addition; the average, "Perf" and the colon, Chris's requests of Nov 5, 2026.)*
 3. **Bars:** one per core, grouped by core type, lowest to highest performance from left to right.
 4. **Per-core figures:** one centered under each bar, as a whole number with no percent sign. The group label carries it, or on the fallback row, the overall figure.
 
@@ -23,64 +23,67 @@ The window contains no controls. Everything else is in the Mac menu bar (§5).
 
 ## 2. Sizes
 
-Height is fixed at each size. Width is the larger of the base width and the width the bars need: 2 × margin + group gap × (groups − 1) + cores × width per core. Width per core is the minimum below, or more if a group's label, at its widest ("Efficiency: 100%"), wouldn't otherwise fit within that group. Every core gets the same width, so all bars match. The requirements' §6 lists the result for each Mac.
+**Every size is Small enlarged** (requirements FR-3). Small's content is 150 high. Its width is the larger of the base width and the width the bars need: 2 × margin + group gap × (groups − 1) + cores × width per core. Width per core is the minimum below, or more if a group's label, at its widest ("Efficiency: 100%"), wouldn't otherwise fit within that group. Every core gets the same width, so all bars match.
 
-| | Small | Medium | Large |
+At any other size, **every number on this page is Small's times the scale,** the window's content width divided by Small's. Medium is 1.5 and Large is 2, and their columns below are shown for reference. Any size's width is Small's times its scale, and its height 150 times its scale, each to the nearest whole point, with a half rounding up. For Medium and Large that gives the widths in the requirements' §6, which round up, because Small's width times 1.5 or 2 always ends in .0 or .5. The meter is drawn from the top-left at the scale of its width, so any fraction of a point the height gains or loses falls in the bottom margin. The requirements' §6 lists Small, Medium and Large for each Mac. *(Until requirements v1.17, Medium and Large had numbers of their own, larger in places, such as bars 134 and 195 tall and text of 11 and 12 points. This page's git history keeps them.)*
+
+| | Small | Medium (1.5×) | Large (2×) |
 |---|---|---|---|
 | **Content height** (below the 32 pt title bar) | 150 | 225 | 300 |
 | **Base width** | 240 | 360 | 480 |
-| **Minimum width per core** | 21 | 23 | 25 |
-| **Margin, all sides** | 12 | 14 | 16 |
-| **Gap between groups** | 12 | 14 | 16 |
-| **Gap between bars** | 3 | 4 | 5 |
-| **Bar corner radius** | 2 | 3 | 3 |
-| **Bar height** | 74 | 134 | 195 |
+| **Minimum width per core** | 21 | 31.5 | 42 |
+| **Margin, all sides** | 12 | 18 | 24 |
+| **Gap between groups** | 12 | 18 | 24 |
+| **Gap between bars** | 3 | 4.5 | 6 |
+| **Bar corner radius** | 2 | 3 | 4 |
+| **Bar height** | 74 | 111 | 148 |
 
 Bars share whatever width the window has, so they are wider than the minimum on Macs at a base width.
 
-The fallback row (§6) has no group label, so its bars also take the label's height and the gap below it: they are 89, 152 and 215 tall at Small, Medium and Large.
+The fallback row (§6) has no group label, so its bars also take the label's height and the gap below it: they are 89 tall at Small, 133.5 at Medium and 178 at Large.
 
 ### Resizing by dragging
 
-Requirements FR-3d. The window can be dragged to any size between Small and Large, and no smaller or larger. When the drag ends:
+Requirements FR-3d. Any edge or corner can be dragged, and the window keeps Small's shape throughout, through AppKit's `contentAspectRatio`, set to Small's content width and height.
 
-1. **The dimension the drag changed more decides.** For width and for height, the change is measured as a share of that dimension's range from Small to Large. So dragging only the right edge, or only the bottom edge, can reach every size.
-2. **The window settles at the size nearest the dragged value** in that dimension. An exact tie goes to the larger size.
-3. **The edge or corner opposite the one dragged stays in place.** Then the on-screen rule in FR-22 applies.
+1. **Dragging the left or right edge sets the width, and the height follows,** with the top edge in place. **Dragging the top or bottom edge sets the height, and the width follows,** with the left edge in place. **Dragging a corner** keeps the opposite corner in place. So a meter grows down and to the right, away from its title bar, unless its top or left edge is dragged.
+2. **The limits are Small and the largest size of the shape that fits the screen's visible area,** set as the window's minimum and maximum content sizes. The screen is the one macOS says the window is on, the one holding most of it. The limits are set again when the window moves to another screen or that screen's visible area changes, and a window that is then larger than its new limit takes the largest size that fits, keeping its top-left corner in place where it can (FR-22).
+3. **The meter is drawn at each size as the drag passes it,** with the text, bars and gaps growing and shrinking together.
+4. **When the drag ends, the window stays at that size.** FR-22's on-screen rule then applies, and the new scale is saved (FR-20).
 
-For example, on the M4, Small is 246 × 150 and Large is 480 × 300. Dragging the right edge of a Small window out to 380 changes the width by 57% of its range and the height by none, so width decides. 380 is nearest Medium's 360, so the window settles at Medium.
+For example, on the M4, Small is 246 × 150. Dragging the right edge of a Small window out to 300 makes it 300 × 183, a scale of 1.22, with per-core figures of 12.2 points.
 
-During the drag, the meter stays at its current size, pinned to the window's top-left, and the rest of the window shows the plain window background.
+The probe that starts the build checks that SwiftUI leaves the window's shape alone and that macOS keeps the edges named in step 1 in place. If macOS keeps different edges in place, this page records what it does. If SwiftUI overrides the shape (requirements §8 item 20), the window resizes freely during the drag, the meter is drawn at the scale of its width, pinned to the top-left, and the window takes its shape from its width when the drag ends.
 
 ### Text
 
 All text uses the system font. Figures use monospaced digits, including each group's average.
 
-| | Small | Medium | Large |
+| | Small | Medium (1.5×) | Large (2×) |
 |---|---|---|---|
-| **Overall figure,** semibold | 13 | 16 | 20 |
-| **Color key,** regular | 10 | 11 | 12 |
-| **Group labels,** medium | 10 | 11 | 12 |
-| **Per-core figures,** regular | 10 | 11 | 12 |
+| **Overall figure,** semibold | 13 | 19.5 | 26 |
+| **Color key,** regular | 10 | 15 | 20 |
+| **Group labels,** medium | 10 | 15 | 20 |
+| **Per-core figures,** regular | 10 | 15 | 20 |
 
 ### Vertical spacing
 
-| | Small | Medium | Large |
+| | Small | Medium (1.5×) | Large (2×) |
 |---|---|---|---|
-| **Top row height** | 16 | 20 | 24 |
-| **Gap below the top row** | 6 | 8 | 10 |
-| **Group label height** | 12 | 14 | 15 |
-| **Gap below group labels** | 3 | 4 | 5 |
-| **Gap below bars** | 3 | 4 | 5 |
-| **Per-core figure height** | 12 | 13 | 14 |
+| **Top row height** | 16 | 24 | 32 |
+| **Gap below the top row** | 6 | 9 | 12 |
+| **Group label height** | 12 | 18 | 24 |
+| **Gap below group labels** | 3 | 4.5 | 6 |
+| **Gap below bars** | 3 | 4.5 | 6 |
+| **Per-core figure height** | 12 | 18 | 24 |
 
 ### Color key
 
-| | Small | Medium | Large |
+| | Small | Medium (1.5×) | Large (2×) |
 |---|---|---|---|
-| **Dot diameter** | 7 | 8 | 9 |
-| **Gap between dot and word** | 4 | 4 | 4 |
-| **Gap between System and User** | 8 | 10 | 12 |
+| **Dot diameter** | 7 | 10.5 | 14 |
+| **Gap between dot and word** | 4 | 6 | 8 |
+| **Gap between System and User** | 8 | 12 | 16 |
 
 ## 3. Bars
 
@@ -112,7 +115,7 @@ Chosen bar colors replace the two defaults in both the bars and the key (FR-28).
 
 **View** contains, in order:
 
-- **Size** ▸ Small ⇧⌘S, Medium ⇧⌘M, Large ⇧⌘L, with the current size checked. Each shortcut shows at the right of its item, where macOS draws menu shortcuts (requirements FR-24a). *(Chris's request, Nov 5, 2026, with ⌘1, ⌘2 and ⌘3; first letters since Nov 6, 2026.)*
+- **Size** ▸ Small ⇧⌘S, Medium ⇧⌘M, Large ⇧⌘L. A size is checked only when the window is exactly that size, meaning its content width is that preset's width, so after a drag to any other size none is checked (requirements FR-24). Choosing one sets the window to it with the top-left corner in place (FR-22). Each shortcut shows at the right of its item, where macOS draws menu shortcuts (requirements FR-24a). *(Chris's request, Nov 5, 2026, with ⌘1, ⌘2 and ⌘3; first letters since Nov 6, 2026.)*
 - **Refresh Rate** ▸ 1 second ⌘1, 2 seconds ⌘2, 3 seconds ⌘3, 4 seconds ⌘4, 5 seconds ⌘5, with the current rate checked (requirements FR-18e). *(Shortcuts at Chris's request, Nov 6, 2026.)*
 - **Colors** ▸ System Color…, User Color…, then a separator and Reset to Defaults
 - A separator
@@ -121,19 +124,20 @@ Chosen bar colors replace the two defaults in both the bars and the key (FR-28).
 ## 6. States
 
 - **Before the first reading:** the tracks are empty, each per-core figure shows "–", each group label shows its name and a dash, such as "Efficiency: –", and the overall figure shows "All cores: –".
-- **Core types can't be determined** (FR-8c): one row of bars with no label. The bars take the label's place, so they are 89, 152 and 215 tall rather than 74, 134 and 195. The window's sizes don't change. *(Chris's decision, Nov 5, 2026. Until then the row was labeled "Cores %".)*
+- **Core types can't be determined** (FR-8c): one row of bars with no label. The bars take the label's place, so at Small they are 89 tall rather than 74, and at other sizes those times the scale. The window's sizes don't change. *(Chris's decision, Nov 5, 2026. Until then the row was labeled "Cores %".)*
 - **Full load:** every figure can read 100, and the overall figure and every group label "100%". The minimum width per core exists for this case.
 
 ## 7. Measured fit
 
 Measured on the M4 Mac mini with macOS 27, from real system text. Its display is 2560 × 1440 at scale 1.0, not Retina.
 
-- **Per-core figures:** rendered "100" side by side at full load. At 20, 22 and 24 pt per core they run together; at 21, 23 and 25 pt they read separately. These results set the minimum widths in §2.
-- **Top row at base width:** the overall figure at "All cores: 100%" plus the key leaves 27.3 pt spare at Small, 114.2 at Medium and 196.0 at Large (measured Nov 5, 2026). "CPU 100%", before requirements v1.10, left 58.6, 151.2 and 239.7.
+- **Per-core figures:** rendered "100" side by side at full load. At 20, 22 and 24 pt per core they run together; at 21, 23 and 25 pt they read separately. These results set Small's minimum width in §2. Medium and Large used 23 and 25 until requirements v1.17.
+- **Top row at base width:** the overall figure at "All cores: 100%" plus the key leaves 27.3 pt spare at Small (measured Nov 5, 2026). Since requirements v1.17 the spare grows with the scale, and by a little more, because the text gets narrower for its size as it grows (below), so it is at least 41.0 at Medium and 54.6 at Large. The build measures it. With their own layouts, before v1.17, Medium and Large left 114.2 and 196.0, and "CPU 100%", before requirements v1.10, left 58.6, 151.2 and 239.7.
 - **Title bar at 240 wide:** "CPUMeter 1.0" is 88.2 pt wide and centered, so it starts 6.9 pt clear of the window buttons, which end at 69.
 - **Group labels before requirements v1.9,** at 10, 11 and 12 pt: "Efficiency %" is 61.5, 66.9 and 72.1 pt wide; "Performance %" is 76.1, 82.9 and 89.5; "Super %" is 41.8, 45.5 and 49.1; "Cores %" is 41.6, 45.3 and 48.9. To three decimals, as the width rule uses them (measured in Increment 2.1, Nov 4, 2026): 61.511, 66.889 and 72.126; 76.130, 82.905 and 89.528; 41.777, 45.503 and 49.148; 41.553, 45.257 and 48.879. The extra precision matters once: the M1 Pro with two Efficiency cores needs 282.05 at Small, so its window is 283 wide.
-- **Group labels at their widest,** with monospaced digits, at 10, 11 and 12 pt (measured Nov 5, 2026): "Efficiency: 100%" is 84.488, 91.906 and 99.136; "Performance: 100%" is 99.107, 107.922 and 116.537; "Perf: 100%" is 56.293, 61.277 and 66.145; "Super: 100%" is 64.754, 70.520 and 76.158. The width rule uses these from requirements v1.10.
-- **Label fit** (requirements v1.10): the M1 Pro and M1 Max need the most extra width, because their Efficiency group has two cores: at Small and Medium on the 8-core M1 Pro, and at every size on the 10-core M1 Pro and M1 Max. Macs with four Efficiency cores and 10 or more cores in all need 2–3 pt more at Small, because "Efficiency: 100%" is 0.5 pt wider than four 21 pt cores. "Perf" appears on the 10-core M4 and M5 at Small and on the MacBook Neo at Small and Medium, and nowhere else. With that, every label fits within its own group on every Mac in the requirements' §6. On the M4, "Perf: 100%" has 27.7 pt spare at Small, and "Performance: 100%" 19.3 at Medium.
+- **Group labels at their widest,** with monospaced digits, at 10, 11 and 12 pt (measured Nov 5, 2026): "Efficiency: 100%" is 84.488, 91.906 and 99.136; "Performance: 100%" is 99.107, 107.922 and 116.537; "Perf: 100%" is 56.293, 61.277 and 66.145; "Super: 100%" is 64.754, 70.520 and 76.158. From requirements v1.10 the width rule used these at each size. Since v1.17 it uses only the 10-pt figures, because it sets Small's width alone and every other size scales from it.
+- **Label fit** (requirements v1.10): the M1 Pro and M1 Max need the most extra width, because their Efficiency group has two cores: Small is 374 wide rather than 240 on the 8-core M1 Pro, and 459 on the 10-core M1 Pro and M1 Max. Since requirements v1.17 that extra width carries to every size. *(Until then, the 8-core M1 Pro needed it only at Small and Medium.)* Macs with four Efficiency cores and 10 or more cores in all need 2–3 pt more at Small, because "Efficiency: 100%" is 0.5 pt wider than four 21 pt cores. "Perf" appears on the 10-core M4 and M5 and on the MacBook Neo at Small, and so at every size since requirements v1.17, and nowhere else. With that, every label fits within its own group on every Mac in the requirements' §6. On the M4, "Perf: 100%" has 27.7 pt spare at Small.
+- **Text at larger sizes** (requirements v1.17): from 10 to 12 pt, the system font gets slightly narrower for its size as the size grows. "Efficiency: 100%" is 8.45 pt wide per point of size at 10 pt, 8.36 at 11 and 8.26 at 12, and "Performance: 100%" 9.91, 9.81 and 9.71. If that holds at larger sizes, text that fits at Small, with the gaps and widths scaled with it, fits at every larger size, with a little room to spare. The build measures it at the presets and the largest size.
 
 ## 8. Decisions Made Without a Direct Question (please veto if any are wrong)
 
@@ -141,12 +145,15 @@ Measured on the M4 Mac mini with macOS 27, from real system text. Its display is
 2. **Per-core figures have no percent sign** (§1). There isn't room for one per bar, so the group labels carry it.
 3. **The zero state uses a dash** (§6), so "not measured yet" can't be mistaken for 0%.
 4. **The key always shows,** at every size and with default colors.
-5. **The green window button zooms to Large and back,** and full screen is off. *(Revised Nov 4, 2026. It was gray while the sizes were fixed. Dragging now snaps to the sizes, so the window counts as resizable.)*
+5. **The green window button zooms to Large and back to the size it had,** and full screen is off. *(Revised Nov 4, 2026. It was gray while the sizes were fixed. Since then the window can be dragged, so it counts as resizable. Revised again for requirements v1.17: back to whatever size it had.)*
 6. **The fallback row has no label** (§6), so the overall figure carries the percent sign there. *(Revised Nov 5, 2026, at Chris's request. It was labeled "Cores %".)*
-7. **"Nearest" is judged by whichever dimension the drag changed more** (§2, Resizing by dragging), as a share of its range from Small to Large, so a drag along one edge always works.
-8. **During a drag, the meter keeps its current size** rather than stretching, because each size has its own fixed text and spacing.
+7. **A drag keeps the top edge in place when a side is dragged, and the left edge when the top or bottom is dragged** (§2, Resizing by dragging), so the meter grows away from its title bar and its top-left corner, which is where FR-22 pins it too. *(Revised for requirements v1.17. Until then this item set how the nearest size was judged when a drag snapped.)*
+8. **During a drag, the meter is drawn at each size it passes through** (§2), so the size you see is the size you'll get. That costs some CPU, but only while dragging. *(Revised for requirements v1.17. Until then the meter kept its size during a drag, because each size had its own text and spacing.)*
 9. **A group label keeps the label's style for its average,** medium weight in the secondary label color, with monospaced digits. *(Added Nov 5, 2026.)*
-10. **The 1 pt gap comes out of the upper part of a bar,** now user time, so the bar's top always shows the true total (§3). *(Added Nov 5, 2026.)*
+10. **The 1 pt gap comes out of the upper part of a bar,** now user time, so the bar's top always shows the true total (§3). *(Added Nov 5, 2026.)* With v1.17 it scales with the rest: 1.5 pt at Medium and 2 at Large.
+11. **Every size's width and height round to the nearest whole point, with a half rounding up** (§2), and the meter is drawn from the top-left at the scale of its width, so any fraction of a point falls in the bottom margin. For Medium and Large this gives the requirements' §6 widths, which round up. A dragged size also comes back exactly from its saved scale at the next launch, where always rounding up could add a point from a tiny error in the arithmetic. *(Added for requirements v1.17, and widened from the height to both when Chris approved this revision.)*
+12. **The checkmark goes by the content width** (§5), so it shows after choosing a preset, or after a drag that ends exactly at one. *(Added for requirements v1.17.)*
+13. **The size limits follow the window's screen** (§2, Resizing by dragging): the one macOS says it's on, and again whenever it moves to another screen or that screen's visible area changes, such as when the Dock changes size. A window that is then too large for its screen takes the largest size that fits, with its top-left corner kept in place where it can be, as at launch (FR-22). *(Added for requirements v1.17, when Chris approved this revision.)*
 
 ## 9. To Confirm in the Real App
 
@@ -155,11 +162,12 @@ The canvas is a browser mockup, so these need checking in the real app, at the i
 - Text and bar edges on a scale 1.0 display, which is the M4 mini's and the harder case for small text.
 - That the meter's text matches the widths measured in §7, as drawn by `Canvas` through Increment 5.2 and by Core Animation from 5.3. If it doesn't, the figures need another look at full load.
 - Switching size at runtime, including the top-left corner staying in place (FR-22). The M4 confirmed this in Increment 0.2; staying on screen needed direct window access.
-- Snapping after a drag from each edge and corner, near screen edges, and with the green button. Confirmed by Chris on the M4 and the M1 in Increment 0.3.
+- Resizing by dragging each edge and corner, with the shape kept during the drag, near screen edges, at the smallest and largest sizes, and with the green button. Snapping, which this replaced in requirements v1.17, was confirmed by Chris on the M4 and the M1 in Increment 0.3.
+- Text and bars at sizes between and beyond the presets, on a scale 1.0 display, up to the largest size.
 - The top row and title bar on the M3 MacBook Air's built-in display, during its one check near the end.
 
-Core counts other than 8 and 10 can only be checked with simulated data. Increment 2.4 did that for every Mac in the requirements' §6, including the MacBook Neo's "Perf" and the fallback row, and found every one clean at all three sizes.
+Core counts other than 8 and 10 can only be checked with simulated data. Increment 2.4 did that for every Mac in the requirements' §6, including the MacBook Neo's "Perf" and the fallback row, and found every one clean at all three sizes. v1.17's increment checks them again at the new Medium and Large.
 
 ---
 
-*Next step: requirements v1.17, Chris's free sizing, chosen on Nov 8, 2026: any size from Small up, as a plain zoom of Small, dragged from any edge or corner. This page's sizes and resizing (§2), menus (§5) and measured fit (§7) change with it. Increment 5.2, Footprint, was confirmed on the M4 and the M1 on Nov 8, 2026, with no change to this page.*
+*Next step: Increment 5.4, free sizing, in build plan v1.10, approved by Chris on Nov 8, 2026, with a probe first. This page's revision for it was approved by Chris on Nov 8, 2026. The design canvas shows Medium and Large as v1.17 draws them, from version 25 (Nov 8, 2026), and its live window can be set to any scale from 1 to 3 times Small. Increment 5.2, Footprint, was confirmed on the M4 and the M1 on Nov 8, 2026, with no change to this page.*
