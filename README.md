@@ -19,8 +19,9 @@ privileges.
 - **User and system time** stacked in each bar, blue and orange by default, and
   changeable with the macOS color chooser.
 - **An overall figure and a percentage for each core.**
-- **Three sizes**, Small, Medium and Large, with the width fitted to the Mac's core
-  count, up to the current maximum of 36 cores.
+- **Any size from Small up**, dragged from any edge or corner, with the whole meter
+  scaling together. Small, Medium and Large are presets, and the width fits the
+  Mac's core count, up to the current maximum of 36 cores.
 - **Adjustable refresh rate**, 1–5 seconds, remembered across launches.
 - **Keep on Top**, on by default, also remembered.
 
@@ -34,8 +35,9 @@ Measured over an hour after a 5-minute warm-up, at a 1-second refresh, on macOS 
 | M4 Mac mini | 0.37% of one core | about 26 MB |
 | 2020 M1 Mac mini | 0.57% of one core | about 25 MB |
 
-These figures are for the Medium size. CPU and memory stay level across the hour, and
-on the M4, Small, Medium and Large cost the same.
+These figures are for the Medium size. CPU and memory stay level across the hour. On
+the M4, CPU is about the same at every size, from Small up to the largest the screen
+allows, which uses about 15 MB more memory.
 
 ## Requirements
 

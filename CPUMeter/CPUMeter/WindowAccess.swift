@@ -4,10 +4,12 @@
 //
 //  The one place CPUMeter reaches the window SwiftUI creates: requirements §6,
 //  the fourth use of AppKit, added in v1.7. The window level for Keep on Top
-//  and staying on screen (Increment 0.2), settling at one of the three
-//  sizes after a drag or any other resize (Increment 0.3), passing on
-//  macOS's notice of whether the window can be seen (Increment 4.1), and
-//  taking new widths if the core count changes (Increment 4.2).
+//  and staying on screen (Increment 0.2), passing on macOS's notice of
+//  whether the window can be seen (Increment 4.1), taking new widths if the
+//  core count changes (Increment 4.2), and, since Increment 5.4, keeping the
+//  window in Small's shape at any size, from Small up to the largest size
+//  its screen holds (requirements v1.17 and v1.18). Increment 0.3's snapping
+//  to three sizes is gone.
 //
 
 import SwiftUI
@@ -16,32 +18,48 @@ import AppKit
 /// An invisible view placed behind the window's content. It finds the window
 /// it sits in and does what SwiftUI can't:
 /// - sets the window level for Keep on Top (FR-2);
-/// - settles the window at one of the three sizes when a drag or other resize
-///   ends, and saves that size (FR-3d);
-/// - sets the window's size when View → Size changes, with its top-left corner
-///   in place, and again when the sizes' widths change with the core count;
-/// - keeps the window on screen after any of these (FR-22);
+/// - keeps the window in Small's shape at every step of a drag from any edge
+///   or corner, with the edges design §2 names held in place, and sizes the
+///   green button's zoom (FR-3d, requirements §8 items 20–22);
+/// - works out the largest size the window's screen holds and passes it up,
+///   for the content's own size limits (FR-22, design §8 item 13);
+/// - sets the window to the saved scale at launch, and to a preset chosen in
+///   View → Size, with its top-left corner in place (FR-20, FR-22);
+/// - keeps the window on screen after any of these, and passes the window's
+///   scale up to be saved when a resize ends (FR-20, FR-22);
 /// - says when the window can or can't be seen, so sampling pauses while it
 ///   can't (FR-17).
 ///
 /// SwiftUI's `.windowLevel(.floating)` gave level 19 rather than AppKit's
 /// floating level 3, and kept setting it again on scene updates, so the scene
 /// has no `.windowLevel` and only this view sets the level. SwiftUI can
-/// position a window only when it opens, and can't limit resizing to set sizes.
+/// position a window only when it opens, and has no way to keep a window's
+/// shape. It also sets the window's size limits again on every update, so
+/// the limits come from the content's frame instead (requirements §6).
 struct WindowAccess: NSViewRepresentable {
     /// View → Keep on Top.
     let keepOnTop: Bool
 
-    /// View → Size. Written back when the window settles at a new size.
-    @Binding var size: MeterSize
+    /// The saved scale (FR-20). The window takes it at launch, and again
+    /// whenever it changes from outside, as when View → Size chooses a
+    /// preset.
+    let scale: CGFloat
 
-    /// Each size's content size on this Mac (FR-3b).
+    /// Small's layout on this Mac, and with it the sizing rules (FR-3b).
     let layouts: MeterLayouts
 
     /// Called with true when any part of the window can be seen again, and
     /// false when none of it can: minimized, fully covered, the app hidden,
     /// or the display asleep (FR-17).
     let onVisibilityChange: (Bool) -> Void
+
+    /// Called with the largest content size the window's screen holds, at
+    /// launch and whenever it changes.
+    let onLargest: (CGSize) -> Void
+
+    /// Called with the window's scale when a resize ends at a new one, to be
+    /// saved (FR-20).
+    let onScale: (CGFloat) -> Void
 
     func makeNSView(context: Context) -> WindowAccessView {
         let view = WindowAccessView(layouts: layouts)
@@ -50,23 +68,52 @@ struct WindowAccess: NSViewRepresentable {
     }
 
     func updateNSView(_ view: WindowAccessView, context: Context) {
+        view.onVisibilityChange = onVisibilityChange
+        view.onLargest = onLargest
+        view.onScale = onScale
         view.layouts = layouts
         view.keepOnTop = keepOnTop
-        view.choose(size)
-        let binding = $size
-        view.onSettle = { binding.wrappedValue = $0 }
-        view.onVisibilityChange = onVisibilityChange
+        view.request(scale)
+        view.keepDelegate()
     }
 }
 
-/// Which edges stay in place when the window changes size.
-private struct Pin {
-    /// True: the right edge stays. False: the left edge stays.
-    var right = false
-    /// True: the bottom edge stays. False: the top edge stays.
-    var bottom = false
+/// Sits in front of SwiftUI's window delegate. It answers the window's two
+/// sizing questions itself, what size to take at each step of a resize and
+/// what size the green button zooms to, and hands every other delegate
+/// message to SwiftUI's, which it holds on to (requirements §6).
+private final class ShapeDelegate: NSObject, NSWindowDelegate {
+    /// SwiftUI's own delegate. Held strongly: a window holds its delegate
+    /// weakly, and this one now stands in its place.
+    nonisolated(unsafe) var original: (any NSWindowDelegate)?
 
-    static let topLeft = Pin()
+    /// The size to take, given the window frame size macOS proposes.
+    var shape: ((NSWindow, NSSize) -> NSSize)?
+
+    /// The frame the green button zooms to.
+    var standardFrame: ((NSWindow, NSRect) -> NSRect)?
+
+    nonisolated override func responds(to aSelector: Selector!) -> Bool {
+        if super.responds(to: aSelector) { return true }
+        return original?.responds(to: aSelector) ?? false
+    }
+
+    nonisolated override func forwardingTarget(for aSelector: Selector!) -> Any? {
+        if let original, original.responds(to: aSelector) { return original }
+        return super.forwardingTarget(for: aSelector)
+    }
+
+    /// SwiftUI answers first, with its own limits, and the shape is put on
+    /// its answer.
+    func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
+        let proposed = original?.windowWillResize?(sender, to: frameSize) ?? frameSize
+        return shape?(sender, proposed) ?? proposed
+    }
+
+    /// SwiftUI doesn't answer this one.
+    func windowWillUseStandardFrame(_ window: NSWindow, defaultFrame newFrame: NSRect) -> NSRect {
+        standardFrame?(window, newFrame) ?? newFrame
+    }
 }
 
 /// The AppKit side of `WindowAccess`. It draws nothing and takes no clicks.
@@ -75,41 +122,60 @@ final class WindowAccessView: NSView {
         didSet { applyLevel() }
     }
 
-    /// The size the window is at, or is settling at.
-    private(set) var size = MeterSize.medium
-
-    /// Each size's content size on this Mac. Worked out at launch, and again
-    /// if the core count changes, when the window takes its size's new width
-    /// (NFR-4, Increment 4.2).
+    /// Small's layout on this Mac. Worked out at launch, and again if the
+    /// core count changes, when the window keeps its scale at the new
+    /// widths (NFR-4, Increment 4.2).
     var layouts: MeterLayouts {
         didSet { layoutsChanged(from: oldValue) }
     }
 
-    /// True from a change of layouts until the window has taken its new
-    /// width, so that a resize SwiftUI makes meanwhile, to fit the new size
-    /// limits, isn't settled as if the user had made it.
-    private var isChangingLayouts = false
-
-    /// Saves a size the window settled at as the chosen size.
-    var onSettle: ((MeterSize) -> Void)?
-
-    /// Passes on whether the window can be seen, each time macOS says it
-    /// changed (FR-17).
     var onVisibilityChange: ((Bool) -> Void)?
+    var onLargest: ((CGSize) -> Void)?
+    var onScale: ((CGFloat) -> Void)?
 
-    /// The window's frame when a drag began, or nil when no drag is under way.
-    private var dragStartFrame: NSRect?
+    private let shapeDelegate = ShapeDelegate()
 
-    /// True while this view sets the window's frame, so that its own resizes
-    /// aren't settled a second time.
+    /// The saved scale as last passed in. Only a change to it resizes the
+    /// window, so a value passed in before a resize's new scale has been
+    /// saved can't undo the resize.
+    private var requestedScale: CGFloat?
+
+    /// The scale the window is at, from the last resize that ended.
+    private var scale = MeterSize.medium.scale
+
+    /// The largest size last passed up.
+    private var reportedLargest: CGSize?
+
+    /// The window's frame when a resize began, and what kind it is, or nil
+    /// and `.none` when none is under way.
+    private var resizeStartFrame: NSRect?
+    private var drag = MeterSizing.Drag.none
+
+    /// True while a drag of the top edge or a top corner is under way, when
+    /// the window's top edge moves.
+    private var movesTop = false
+
+    /// True while this view sets the window's frame or origin, so that its
+    /// own changes aren't handled a second time.
     private var isSettingFrame = false
 
-    /// False until the window has been set to the saved size at launch.
+    /// True from a change of layouts until the window has taken its new
+    /// width, so that a resize SwiftUI makes meanwhile, to fit the new size
+    /// limits, is left alone.
+    private var isChangingLayouts = false
+
+    /// False until the window has been set to the saved scale at launch.
     private var isReady = false
 
     init(layouts: MeterLayouts) {
         self.layouts = layouts
         super.init(frame: .zero)
+        shapeDelegate.shape = { [weak self] window, proposed in
+            self?.shaped(proposed, for: window) ?? proposed
+        }
+        shapeDelegate.standardFrame = { [weak self] window, frame in
+            self?.zoomFrame(for: window) ?? frame
+        }
     }
 
     @available(*, unavailable)
@@ -117,27 +183,54 @@ final class WindowAccessView: NSView {
         fatalError("WindowAccessView is made in code only")
     }
 
-    /// View → Size changed: the window takes the new size with its top-left
-    /// corner in place (FR-22).
-    func choose(_ newSize: MeterSize) {
-        guard newSize != size else { return }
-        size = newSize
-        setSize(newSize, pinning: .topLeft, animate: false)
+    private var sizing: MeterSizing { layouts.sizing }
+
+    // MARK: - From SwiftUI
+
+    /// The saved scale, passed in on every scene update. A change to it,
+    /// such as a preset chosen in View → Size, sets the window to that scale
+    /// with its top-left corner in place (FR-22), even when the window was
+    /// dragged away from that preset. Not during a resize.
+    func request(_ newScale: CGFloat) {
+        guard newScale != requestedScale else { return }
+        requestedScale = newScale
+        guard isReady, let window, !window.inLiveResize else { return }
+        take(scale: newScale)
+    }
+
+    /// Puts the delegate back in front if SwiftUI replaced it. Checked on
+    /// every scene update and at the start of every resize.
+    func keepDelegate() {
+        guard isReady, let window, window.delegate !== shapeDelegate else { return }
+        installDelegate(on: window)
     }
 
     /// The sizes' widths changed with the core count (NFR-4): the window
-    /// takes its size's new width, with the top-left corner it has now, and
-    /// stays on screen (FR-3b, FR-22). This waits one turn of the run loop,
-    /// so SwiftUI has applied the content's new size limits first.
+    /// keeps its scale at the new widths, with the top-left corner it has
+    /// now, and stays on screen (FR-3b, FR-3c, FR-22). This waits one turn
+    /// of the run loop, so SwiftUI has applied the content's new size limits
+    /// first.
     private func layoutsChanged(from old: MeterLayouts) {
         guard layouts != old, let window, isReady else { return }
         isChangingLayouts = true
         let start = window.frame
+        let keptScale = scale
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            self.setSize(self.size, pinning: .topLeft, animate: false, from: start)
+            self.reportLargest(fittingWindow: false)
+            self.take(scale: keptScale, from: start)
             self.isChangingLayouts = false
         }
+    }
+
+    // MARK: - Joining the window
+
+    override func viewWillMove(toWindow newWindow: NSWindow?) {
+        // SwiftUI's delegate goes back in place on the window being left.
+        if let window, window.delegate === shapeDelegate {
+            window.delegate = shapeDelegate.original
+        }
+        super.viewWillMove(toWindow: newWindow)
     }
 
     override func viewDidMoveToWindow() {
@@ -159,24 +252,72 @@ final class WindowAccessView: NSView {
         // be seen until the first notice says otherwise.
         center.addObserver(self, selector: #selector(windowDidChangeOcclusionState(_:)),
                            name: NSWindow.didChangeOcclusionStateNotification, object: window)
+        // The largest size follows the window's screen (design §8 item 13).
+        center.addObserver(self, selector: #selector(screenChanged(_:)),
+                           name: NSWindow.didChangeScreenNotification, object: window)
+        center.addObserver(self, selector: #selector(screenChanged(_:)),
+                           name: NSApplication.didChangeScreenParametersNotification, object: nil)
 
-        // At launch the saved size wins over the size of the restored frame,
-        // which supplies only the position (FR-19, FR-20). This waits one turn
-        // of the run loop, so that SwiftUI has restored the frame first.
+        // At launch the saved scale wins over the size of the restored frame,
+        // which supplies only the position (FR-19, FR-20). This waits one
+        // turn of the run loop, so that SwiftUI has restored the frame and
+        // set its own delegate first.
         DispatchQueue.main.async { [weak self] in
-            guard let self, self.window != nil else { return }
-            self.setSize(self.size, pinning: .topLeft, animate: false)
+            guard let self, let window = self.window else { return }
+            self.installDelegate(on: window)
+            self.reportLargest(fittingWindow: false)
+            self.take(scale: self.requestedScale ?? MeterSize.medium.scale)
             self.isReady = true
         }
     }
 
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 
+    private func installDelegate(on window: NSWindow) {
+        let current = window.delegate
+        guard current !== shapeDelegate else { return }
+        shapeDelegate.original = current
+        window.delegate = shapeDelegate
+    }
+
     /// Floating above other windows when Keep on Top is on; a normal window
     /// that others can cover when it's off (FR-2).
     private func applyLevel() {
         window?.level = keepOnTop ? .floating : .normal
     }
+
+    // MARK: - The delegate's answers
+
+    /// The frame size to take at one step of a resize, given the one macOS
+    /// proposes: Small's shape, by the kind of resize read when it started,
+    /// from Small up to the largest size (FR-3d, design §2). While the top
+    /// edge is dragged, the size also stops where the top edge reaches the
+    /// top of the visible area, so the opposite edge or corner stays in
+    /// place (FR-22). Without that, a top corner's size could outgrow the
+    /// room above the window, and macOS would push the window down below
+    /// the menu bar.
+    private func shaped(_ proposed: NSSize, for window: NSWindow) -> NSSize {
+        let bar = titleBarHeight(of: window)
+        let asked = CGSize(width: proposed.width, height: proposed.height - bar)
+        var largest = largestSize(for: window)
+        if movesTop, let start = resizeStartFrame, let visible = (window.screen ?? NSScreen.main)?.visibleFrame {
+            let room = visible.maxY - start.minY - bar
+            largest = sizing.largest(in: CGSize(width: largest.width, height: min(largest.height, room)))
+        }
+        let content = sizing.answer(asked: asked, drag: drag, largest: largest)
+        return NSSize(width: content.width, height: content.height + bar)
+    }
+
+    /// The green button's frame: Large, or the largest size if Large doesn't
+    /// fit, with the top-left corner in place, on screen (design §8 item 5,
+    /// requirements §8 item 21). macOS keeps the size the window had and goes
+    /// back to it on the next press.
+    private func zoomFrame(for window: NSWindow) -> NSRect {
+        let content = sizing.clamped(width: sizing.size(of: .large).width, largest: largestSize(for: window))
+        return frame(for: content, keepingTopLeftOf: window.frame, in: window)
+    }
+
+    // MARK: - Resizing
 
     /// macOS says whether any part of the window can be seen changed: it was
     /// minimized or restored, fully covered or uncovered, the app was hidden
@@ -187,66 +328,146 @@ final class WindowAccessView: NSView {
         onVisibilityChange?(window.occlusionState.contains(.visible))
     }
 
+    /// A resize begins: a drag, or the green button or a tiling layout
+    /// animating. Its kind is read once, from the mouse (`MeterSizing.drag`).
     @objc private func windowWillStartLiveResize(_ notification: Notification) {
-        dragStartFrame = window?.frame
-    }
-
-    /// A drag ended. The window settles at the nearest size, with the edge or
-    /// corner opposite the dragged one in place (FR-3d).
-    @objc private func windowDidEndLiveResize(_ notification: Notification) {
-        guard let window, let start = dragStartFrame else { return }
-        dragStartFrame = nil
-        let end = window.frame
-        // The left edge moved, so the right edge stays; the top edge moved,
-        // so the bottom stays. Otherwise the top-left stays.
-        let pin = Pin(right: abs(end.minX - start.minX) > 0.5,
-                      bottom: abs(end.maxY - start.maxY) > 0.5)
-        let newSize = MeterSize.settled(from: contentSize(ofFrame: start),
-                                        to: contentSize(ofFrame: end),
-                                        sizeOf: layouts.contentSize(of:))
-        settle(at: newSize, pinning: pin, animate: true)
-    }
-
-    /// Any resize that isn't a drag or this view's own: the green button,
-    /// Window → Fill, tiling, or SwiftUI. If it left the window between sizes,
-    /// the window settles at the nearest one with its top-left in place
-    /// (requirements §8, item 22). Either way it stays on screen (FR-22).
-    @objc private func windowDidResize(_ notification: Notification) {
-        guard let window, isReady, !isSettingFrame, !isChangingLayouts, dragStartFrame == nil,
-              !window.inLiveResize else { return }
-        let newSize = MeterSize.settled(from: layouts.contentSize(of: size),
-                                        to: contentSize(ofFrame: window.frame),
-                                        sizeOf: layouts.contentSize(of:))
-        settle(at: newSize, pinning: .topLeft, animate: false)
-    }
-
-    /// Sets the window to `newSize` and saves it as the chosen size.
-    private func settle(at newSize: MeterSize, pinning pin: Pin, animate: Bool) {
-        size = newSize
-        setSize(newSize, pinning: pin, animate: animate)
-        // Saved on the next turn of the run loop, because a resize can arrive
-        // while SwiftUI is in the middle of updating its views.
-        let onSettle = onSettle
-        DispatchQueue.main.async { onSettle?(newSize) }
-    }
-
-    /// Sets the window to the given size's content size, with the pinned edges
-    /// where they are, or where they were in `start`, then moves it just far
-    /// enough to be on screen (FR-22).
-    private func setSize(_ size: MeterSize, pinning pin: Pin, animate: Bool, from start: NSRect? = nil) {
         guard let window else { return }
-        let current = window.frame
-        let anchor = start ?? current
-        let content = layouts.contentSize(of: size)
-        var target = NSRect(x: 0, y: 0, width: content.width,
-                            height: content.height + titleBarHeight(of: window))
-        target.origin.x = pin.right ? anchor.maxX - target.width : anchor.minX
-        target.origin.y = pin.bottom ? anchor.minY : anchor.maxY - target.height
-        target = onScreen(target, for: window)
-        guard target != current else { return }
+        keepDelegate()
+        // In case the visible area changed with no notice, such as the Dock
+        // showing.
+        reportLargest(fittingWindow: false)
+        resizeStartFrame = window.frame
+        let mouse = NSEvent.mouseLocation
+        drag = MeterSizing.drag(mouse: mouse, frame: window.frame,
+                                buttonDown: NSEvent.pressedMouseButtons & 1 == 1)
+        movesTop = (drag == .topOrBottom || drag == .corner) && mouse.y > window.frame.midY
+    }
+
+    /// A resize ended. The window stays at its size, brought on screen if the
+    /// drag took it off (FR-3d, FR-22), and its scale is saved (FR-20).
+    @objc private func windowDidEndLiveResize(_ notification: Notification) {
+        guard let window else { return }
+        resizeStartFrame = nil
+        drag = .none
+        movesTop = false
+        settle(window)
+    }
+
+    /// During a drag, a side's edge is held in place (design §2 step 1).
+    /// Any other resize, such as SwiftUI keeping its limits or another app
+    /// sizing the window, is put into Small's shape, on screen (FR-3d,
+    /// FR-22), and its scale saved (FR-20).
+    @objc private func windowDidResize(_ notification: Notification) {
+        guard let window, isReady, !isSettingFrame else { return }
+        if window.inLiveResize {
+            holdEdge(of: window)
+        } else if !isChangingLayouts {
+            settle(window)
+        }
+    }
+
+    /// Put back the edge a side drag keeps, where macOS centered it
+    /// (design §2 step 1, §8 item 7).
+    private func holdEdge(of window: NSWindow) {
+        guard let start = resizeStartFrame,
+              let origin = MeterSizing.heldOrigin(of: window.frame, start: start, drag: drag) else { return }
         isSettingFrame = true
-        window.setFrame(target, display: true, animate: animate)
+        window.setFrameOrigin(origin)
         isSettingFrame = false
+    }
+
+    /// The window at the end of a resize: in Small's shape, which every
+    /// answer gives, or put into it if something sized it without asking;
+    /// on screen; and its scale saved.
+    private func settle(_ window: NSWindow) {
+        let content = contentSize(ofFrame: window.frame)
+        let shaped = sizing.isInShape(content)
+            ? content
+            : sizing.answer(asked: content, drag: .none, largest: largestSize(for: window))
+        setContent(shaped)
+        resizeEnded()
+    }
+
+    /// The window takes a scale's size with its top-left corner in place, or
+    /// the largest size that fits if it doesn't (FR-22). `start` is the frame
+    /// to keep the corner of, if not the current one.
+    private func take(scale newScale: CGFloat, from start: NSRect? = nil) {
+        guard let window else { return }
+        let wanted = newScale.isFinite && newScale > 0 ? newScale : MeterSize.medium.scale
+        let content = sizing.clamped(width: sizing.size(atScale: wanted).width, largest: largestSize(for: window))
+        setContent(content, from: start)
+        resizeEnded()
+    }
+
+    /// A resize ended: the window's scale is passed up to be saved, if it
+    /// isn't the saved one already (FR-20). On the next turn of the run
+    /// loop, because a resize can arrive while SwiftUI is in the middle of
+    /// updating its views.
+    private func resizeEnded() {
+        guard let window else { return }
+        let newScale = sizing.scale(ofWidth: contentSize(ofFrame: window.frame).width)
+        scale = newScale
+        guard newScale != requestedScale else { return }
+        let onScale = onScale
+        DispatchQueue.main.async { onScale?(newScale) }
+    }
+
+    /// Sets the window's content to a size with the top-left corner of
+    /// `start`, or of the current frame, then moves it just far enough to be
+    /// on screen (FR-22).
+    private func setContent(_ content: CGSize, from start: NSRect? = nil) {
+        guard let window else { return }
+        let target = frame(for: content, keepingTopLeftOf: start ?? window.frame, in: window)
+        guard target != window.frame else { return }
+        isSettingFrame = true
+        window.setFrame(target, display: true, animate: false)
+        isSettingFrame = false
+    }
+
+    // MARK: - Limits (FR-3d, FR-22, design §8 item 13)
+
+    /// The screen changed: the window moved to another, or the screens'
+    /// arrangement or visible areas did.
+    @objc private func screenChanged(_ notification: Notification) {
+        reportLargest(fittingWindow: true)
+    }
+
+    /// Passes up the largest size the window's screen holds, if it changed.
+    /// With `fittingWindow`, a window now larger than that first takes the
+    /// largest size, its top-left corner kept where it can be.
+    private func reportLargest(fittingWindow: Bool) {
+        guard let window else { return }
+        let largest = largestSize(for: window)
+        guard largest != reportedLargest else { return }
+        reportedLargest = largest
+        if fittingWindow, isReady, contentSize(ofFrame: window.frame).width > largest.width + 0.001 {
+            setContent(largest)
+            resizeEnded()
+        }
+        let onLargest = onLargest
+        DispatchQueue.main.async { onLargest?(largest) }
+    }
+
+    /// The largest content size of Small's shape the window's screen holds:
+    /// its visible area, clear of the menu bar and Dock, less the title bar
+    /// (requirements §8 items 23 and 30). The screen is the one macOS says
+    /// the window is on.
+    private func largestSize(for window: NSWindow) -> CGSize {
+        guard let visible = (window.screen ?? NSScreen.main)?.visibleFrame else {
+            return CGSize(width: CGFloat.infinity, height: .infinity)
+        }
+        return sizing.largest(in: CGSize(width: visible.width, height: visible.height - titleBarHeight(of: window)))
+    }
+
+    // MARK: - Geometry
+
+    /// The frame for a content size with the top-left corner of `anchor`,
+    /// moved just far enough to be on screen (FR-22).
+    private func frame(for content: CGSize, keepingTopLeftOf anchor: NSRect, in window: NSWindow) -> NSRect {
+        let height = content.height + titleBarHeight(of: window)
+        let frame = NSRect(x: anchor.minX, y: anchor.maxY - height, width: content.width, height: height)
+        guard let visible = (window.screen ?? NSScreen.main)?.visibleFrame else { return frame }
+        return MeterSizing.onScreen(frame, visible: visible)
     }
 
     /// The content area a window frame has, below the title bar.
@@ -255,20 +476,9 @@ final class WindowAccessView: NSView {
         return CGSize(width: frame.width, height: frame.height - titleBarHeight(of: window))
     }
 
+    /// SwiftUI's window has a full-size content view, so the title bar is
+    /// the difference between the frame and the layout rectangle: 32 points.
     private func titleBarHeight(of window: NSWindow) -> CGFloat {
         window.frame.height - window.contentLayoutRect.height
-    }
-
-    /// The frame moved just far enough to fit within the screen's visible
-    /// area, clear of the menu bar and Dock (FR-22). If it can't fit, its
-    /// top-left corner wins, so the title bar stays reachable.
-    private func onScreen(_ frame: NSRect, for window: NSWindow) -> NSRect {
-        guard let visible = (window.screen ?? NSScreen.main)?.visibleFrame else { return frame }
-        var frame = frame
-        if frame.maxX > visible.maxX { frame.origin.x = visible.maxX - frame.width }
-        if frame.minX < visible.minX { frame.origin.x = visible.minX }
-        if frame.minY < visible.minY { frame.origin.y = visible.minY }
-        if frame.maxY > visible.maxY { frame.origin.y = visible.maxY - frame.height }
-        return frame
     }
 }

@@ -6,16 +6,26 @@
 //  turned into the window's size and the place of every label, bar and figure.
 //  Increment 2.1. Since Increment 2.3 it also forms the labels' text (FR-8d),
 //  shortens "Performance" where FR-8e says, and lays out the unlabeled
-//  fallback row (FR-8c). Everything here except `measuredLabelWidth` is a pure
-//  function of the core groups and the label widths, so the rule can be
-//  checked without AppKit or a window.
+//  fallback row (FR-8c). Since Increment 5.4 it holds Small's numbers only:
+//  the width rule and "Perf" are worked out at Small, and every other size is
+//  Small's layout times its scale (FR-3). Everything here except
+//  `measuredLabelWidth` is a pure function of the core groups and the label
+//  widths, so the rule can be checked without AppKit or a window.
 //
 
 import CoreGraphics
 import AppKit
 
-/// The numbers from §2 of the design document for one size, in points.
+/// The numbers from §2 of the design document, in points: Small's, or
+/// Small's times a scale (FR-3).
 nonisolated struct MeterMetrics: Equatable, Sendable {
+    // MARK: Size (FR-3a, FR-3b)
+
+    /// The content's height, below the title bar.
+    var contentHeight: CGFloat
+    /// The least content width. The bars can need more (FR-3b).
+    var baseWidth: CGFloat
+
     // MARK: Across (FR-3b)
 
     /// Margin on all sides of the content.
@@ -28,6 +38,8 @@ nonisolated struct MeterMetrics: Equatable, Sendable {
     /// Gap between neighboring bars. Each bar is inset half of it on each side.
     var barGap: CGFloat
     var cornerRadius: CGFloat
+    /// Gap between a bar's system and user parts (design §3, §8 item 10).
+    var partGap: CGFloat
 
     // MARK: Down, top to bottom (design §2, Vertical spacing)
 
@@ -58,42 +70,35 @@ nonisolated struct MeterMetrics: Equatable, Sendable {
     /// Between System and User.
     var keyItemGap: CGFloat
 
+    /// Small's numbers (design §2). Every other size is these times its
+    /// scale.
     static let small = MeterMetrics(
-        margin: 12, groupGap: 12, minimumCoreWidth: 21, barGap: 3, cornerRadius: 2,
+        contentHeight: 150, baseWidth: 240,
+        margin: 12, groupGap: 12, minimumCoreWidth: 21, barGap: 3, cornerRadius: 2, partGap: 1,
         topRowHeight: 16, gapBelowTopRow: 6, labelHeight: 12, gapBelowLabels: 3,
         barHeight: 74, gapBelowBars: 3, figureHeight: 12,
         overallFontSize: 13, keyFontSize: 10, labelFontSize: 10, figureFontSize: 10,
         keyDotDiameter: 7, keyDotGap: 4, keyItemGap: 8)
 
-    static let medium = MeterMetrics(
-        margin: 14, groupGap: 14, minimumCoreWidth: 23, barGap: 4, cornerRadius: 3,
-        topRowHeight: 20, gapBelowTopRow: 8, labelHeight: 14, gapBelowLabels: 4,
-        barHeight: 134, gapBelowBars: 4, figureHeight: 13,
-        overallFontSize: 16, keyFontSize: 11, labelFontSize: 11, figureFontSize: 11,
-        keyDotDiameter: 8, keyDotGap: 4, keyItemGap: 10)
-
-    static let large = MeterMetrics(
-        margin: 16, groupGap: 16, minimumCoreWidth: 25, barGap: 5, cornerRadius: 3,
-        topRowHeight: 24, gapBelowTopRow: 10, labelHeight: 15, gapBelowLabels: 5,
-        barHeight: 195, gapBelowBars: 5, figureHeight: 14,
-        overallFontSize: 20, keyFontSize: 12, labelFontSize: 12, figureFontSize: 12,
-        keyDotDiameter: 9, keyDotGap: 4, keyItemGap: 12)
-}
-
-nonisolated extension MeterSize {
-    /// The design document's numbers at this size.
-    var metrics: MeterMetrics {
-        switch self {
-        case .small: .small
-        case .medium: .medium
-        case .large: .large
-        }
+    /// Every number times a scale: 1.5 gives Medium's column in design §2,
+    /// and 2 Large's.
+    func scaled(by scale: CGFloat) -> MeterMetrics {
+        MeterMetrics(
+            contentHeight: contentHeight * scale, baseWidth: baseWidth * scale,
+            margin: margin * scale, groupGap: groupGap * scale, minimumCoreWidth: minimumCoreWidth * scale,
+            barGap: barGap * scale, cornerRadius: cornerRadius * scale, partGap: partGap * scale,
+            topRowHeight: topRowHeight * scale, gapBelowTopRow: gapBelowTopRow * scale,
+            labelHeight: labelHeight * scale, gapBelowLabels: gapBelowLabels * scale,
+            barHeight: barHeight * scale, gapBelowBars: gapBelowBars * scale, figureHeight: figureHeight * scale,
+            overallFontSize: overallFontSize * scale, keyFontSize: keyFontSize * scale,
+            labelFontSize: labelFontSize * scale, figureFontSize: figureFontSize * scale,
+            keyDotDiameter: keyDotDiameter * scale, keyDotGap: keyDotGap * scale, keyItemGap: keyItemGap * scale)
     }
 }
 
 /// Where everything goes at one size. Points from the content's top-left
-/// corner, below the title bar, as `Canvas` draws. Positions aren't rounded to
-/// whole pixels here; the meter's drawing does that (Increment 2.2).
+/// corner, below the title bar. Positions aren't rounded to whole pixels
+/// here; the meter's drawing does that (Increment 2.2).
 nonisolated struct MeterLayout: Equatable, Sendable {
     /// One bar and the figure under it.
     nonisolated struct Bar: Equatable, Sendable {
@@ -137,11 +142,17 @@ nonisolated struct MeterLayout: Equatable, Sendable {
         var labelWidth: CGFloat
     }
 
-    var size: MeterSize
+    /// How many times Small this layout is: the content width over Small's
+    /// (FR-3). 1 at Small.
+    var scale: CGFloat
+
+    /// The design's numbers at this scale.
     var metrics: MeterMetrics
 
     /// The window's content area at this size, below the title bar (FR-3a,
-    /// FR-3b).
+    /// FR-3b). Its height is rounded to a whole point (design §2), so it can
+    /// be up to half a point shorter or taller than the layout, which is
+    /// drawn from the top-left: the difference falls in the bottom margin.
     var contentSize: CGSize
 
     /// The width each core gets once the bars share the window's width. At
@@ -159,24 +170,26 @@ nonisolated struct MeterLayout: Equatable, Sendable {
 
     /// The width per core the bars need: the minimum, or more if a group's
     /// label wouldn't otherwise fit within that group. One width for every
-    /// core, so bars are the same width in every group.
-    static func neededCoreWidth(for needs: [GroupNeed], size: MeterSize) -> CGFloat {
+    /// core, so bars are the same width in every group. Worked out at Small,
+    /// from Small's numbers; every other size is Small's times its scale
+    /// (FR-3).
+    static func neededCoreWidth(for needs: [GroupNeed]) -> CGFloat {
         needs.filter { $0.cores > 0 }
             .map { $0.labelWidth / CGFloat($0.cores) }
-            .reduce(size.metrics.minimumCoreWidth, max)
+            .reduce(MeterMetrics.small.minimumCoreWidth, max)
     }
 
-    /// The content width (FR-3b): the larger of the base width and
+    /// Small's content width (FR-3b): the larger of the base width and
     /// 2 × margin + group gap × (groups − 1) + cores × width per core,
     /// rounded up to a whole point.
-    static func contentWidth(for needs: [GroupNeed], size: MeterSize) -> CGFloat {
-        let metrics = size.metrics
+    static func contentWidth(for needs: [GroupNeed]) -> CGFloat {
+        let metrics = MeterMetrics.small
         let cores = needs.reduce(0) { $0 + $1.cores }
         let gaps = metrics.groupGap * CGFloat(max(needs.count - 1, 0))
-        let needed = 2 * metrics.margin + gaps + CGFloat(cores) * neededCoreWidth(for: needs, size: size)
+        let needed = 2 * metrics.margin + gaps + CGFloat(cores) * neededCoreWidth(for: needs)
         // The tolerance keeps floating-point noise in a whole number from
         // adding a point. It is far below anything that could show.
-        return max(size.baseWidth, (needed - 1e-6).rounded(.up))
+        return max(metrics.baseWidth, (needed - 1e-6).rounded(.up))
     }
 
     // MARK: - Label text (FR-8d, FR-8e, FR-10)
@@ -199,45 +212,44 @@ nonisolated struct MeterLayout: Equatable, Sendable {
     /// The names FR-8e may shorten, and what to.
     static let shortNames = ["Performance": "Perf"]
 
-    /// The names the labels show at one size: exactly as macOS gives them
-    /// (FR-8a), except that the names in `shortNames` are shortened if, and
-    /// only if, that gives a narrower window at this size (FR-8e). Decided
-    /// from the labels at their widest, so a label never switches between
-    /// the two as its average changes.
-    static func shownNames(for groups: [CoreGroup], size: MeterSize,
-                           labelWidth: (String) -> CGFloat) -> [String] {
+    /// The names the labels show: exactly as macOS gives them (FR-8a),
+    /// except that the names in `shortNames` are shortened if, and only if,
+    /// that gives a narrower window at Small (FR-8e). Every size is Small
+    /// enlarged, so the choice holds at every size. Decided from the labels
+    /// at their widest, so a label never switches between the two as its
+    /// average changes.
+    static func shownNames(for groups: [CoreGroup], labelWidth: (String) -> CGFloat) -> [String] {
         let full = groups.map(\.name)
         let short = full.map { shortNames[$0] ?? $0 }
         guard short != full else { return full }
         func width(_ names: [String]) -> CGFloat {
             contentWidth(for: zip(groups, names).map {
                 GroupNeed(cores: $0.cores.count, labelWidth: labelWidth(widestLabel($1)))
-            }, size: size)
+            })
         }
         return width(short) < width(full) ? short : full
     }
 
     // MARK: - Positions
 
-    /// The layout of the given groups at one size.
+    /// The layout of the given groups at Small.
     ///
     /// - Parameters:
     ///   - groups: The core groups, lowest to highest performance.
     ///   - labeled: False for the fallback row (FR-8c), which has no label.
     ///     Its bars take the label's height and the gap below it, and the
     ///     label needs no width.
-    ///   - labelWidth: A label's width at this size's label font size, given
-    ///     its full text. `measuredLabelWidth` in the app; fixed figures in
-    ///     tests.
-    init(groups coreGroups: [CoreGroup], size: MeterSize, labeled: Bool, labelWidth: (String) -> CGFloat) {
-        let metrics = size.metrics
+    ///   - labelWidth: A label's width at Small's label font size, given its
+    ///     full text. `measuredLabelWidth` in the app; fixed figures in tests.
+    init(groups coreGroups: [CoreGroup], labeled: Bool, labelWidth: (String) -> CGFloat) {
+        let metrics = MeterMetrics.small
         let names: [String?] = labeled
-            ? Self.shownNames(for: coreGroups, size: size, labelWidth: labelWidth)
+            ? Self.shownNames(for: coreGroups, labelWidth: labelWidth)
             : coreGroups.map { _ in nil }
         let needs = zip(coreGroups, names).map { group, name in
             GroupNeed(cores: group.cores.count, labelWidth: name.map { labelWidth(Self.widestLabel($0)) } ?? 0)
         }
-        let width = Self.contentWidth(for: needs, size: size)
+        let width = Self.contentWidth(for: needs)
         let cores = needs.reduce(0) { $0 + $1.cores }
         let gaps = metrics.groupGap * CGFloat(max(needs.count - 1, 0))
         // Bars share whatever width the window has (design §2).
@@ -246,7 +258,7 @@ nonisolated struct MeterLayout: Equatable, Sendable {
         // Down the window, top to bottom (design §2, Vertical spacing). With
         // no label, the bars start where the label would and grow by the
         // label's height and the gap below it, so they end where labeled bars
-        // do: 89, 152 and 215 tall (design §2, §6).
+        // do: 89 tall at Small (design §2, §6).
         let labelY = metrics.margin + metrics.topRowHeight + metrics.gapBelowTopRow
         let barY = labeled ? labelY + metrics.labelHeight + metrics.gapBelowLabels : labelY
         let barHeight = labeled ? metrics.barHeight
@@ -275,35 +287,53 @@ nonisolated struct MeterLayout: Equatable, Sendable {
             groupX += groupWidth + metrics.groupGap
         }
 
-        self.size = size
+        self.scale = 1
         self.metrics = metrics
-        self.contentSize = CGSize(width: width, height: size.height)
+        self.contentSize = CGSize(width: width, height: metrics.contentHeight)
         self.coreWidth = coreWidth
         self.topRow = CGRect(x: metrics.margin, y: metrics.margin,
                              width: width - 2 * metrics.margin, height: metrics.topRowHeight)
         self.groups = groups
     }
 
+    /// This layout with every place and number times a scale, and the given
+    /// content size (FR-3, design §2).
+    fileprivate func scaled(by scale: CGFloat, contentSize: CGSize) -> MeterLayout {
+        func times(_ rect: CGRect) -> CGRect {
+            CGRect(x: rect.minX * scale, y: rect.minY * scale, width: rect.width * scale, height: rect.height * scale)
+        }
+        var layout = self
+        layout.scale = self.scale * scale
+        layout.metrics = metrics.scaled(by: scale)
+        layout.contentSize = contentSize
+        layout.coreWidth = coreWidth * scale
+        layout.topRow = times(topRow)
+        layout.groups = groups.map { group in
+            Group(label: group.label.map { Label(name: $0.name, frame: times($0.frame)) },
+                  bars: group.bars.map { Bar(core: $0.core, track: times($0.track), figure: times($0.figure)) })
+        }
+        return layout
+    }
+
     // MARK: - Measuring the labels (requirements §6, the third use of AppKit)
 
     /// A group label's width in the system font at medium weight, with
     /// monospaced digits, as the meter draws it. The window's size has to be
-    /// known before anything is drawn, so this can't wait for `Canvas` to
-    /// measure the text. AppKit gives the exact width, where `Canvas` rounds
-    /// up to whole points.
+    /// known before anything is drawn, so this measures the text itself, to
+    /// a fraction of a point.
     static func measuredLabelWidth(_ label: String, fontSize: CGFloat) -> CGFloat {
         let font = NSFont.monospacedDigitSystemFont(ofSize: fontSize, weight: .medium)
         return NSAttributedString(string: label, attributes: [.font: font]).size().width
     }
 }
 
-/// The layout at each of the three sizes, worked out at launch from this Mac's
-/// core groups, and again if they change. Nothing here is stored, so the
+/// The meter's layout on this Mac at any size: Small's, worked out at launch
+/// from this Mac's core groups, and again if they change, and Small's times
+/// the scale at every other size (FR-3). Nothing here is stored, so the
 /// window is always sized for the Mac the app is running on (FR-3b, FR-3c).
 nonisolated struct MeterLayouts: Equatable, Sendable {
-    private var small: MeterLayout
-    private var medium: MeterLayout
-    private var large: MeterLayout
+    /// Small's layout.
+    let small: MeterLayout
 
     /// - Parameters:
     ///   - groups: The core groups, lowest to highest performance.
@@ -312,12 +342,9 @@ nonisolated struct MeterLayouts: Equatable, Sendable {
     ///     the app; fixed figures in tests.
     init(groups: [CoreGroup], labeled: Bool,
          labelWidth: (_ label: String, _ fontSize: CGFloat) -> CGFloat = MeterLayout.measuredLabelWidth) {
-        func layout(_ size: MeterSize) -> MeterLayout {
-            MeterLayout(groups: groups, size: size, labeled: labeled) { labelWidth($0, size.metrics.labelFontSize) }
+        small = MeterLayout(groups: groups, labeled: labeled) {
+            labelWidth($0, MeterMetrics.small.labelFontSize)
         }
-        small = layout(.small)
-        medium = layout(.medium)
-        large = layout(.large)
     }
 
     /// The layouts for a Mac's core groups, with no label on the fallback row
@@ -328,16 +355,21 @@ nonisolated struct MeterLayouts: Equatable, Sendable {
         self.init(groups: topology.groups, labeled: topology.fallbackReason == nil, labelWidth: labelWidth)
     }
 
-    subscript(size: MeterSize) -> MeterLayout {
-        switch size {
-        case .small: small
-        case .medium: medium
-        case .large: large
-        }
+    /// The sizing rules, from Small's content size on this Mac.
+    var sizing: MeterSizing {
+        MeterSizing(small: small.contentSize)
     }
 
-    /// The window's content area at a size, below the title bar.
-    func contentSize(of size: MeterSize) -> CGSize {
-        self[size].contentSize
+    /// The layout for a window whose content is this wide: Small's times the
+    /// width over Small's, drawn from the top-left (design §2). A width below
+    /// Small's, which the window's limits don't allow, gives Small.
+    func layout(atWidth width: CGFloat) -> MeterLayout {
+        guard width.isFinite, width > small.contentSize.width else { return small }
+        return small.scaled(by: width / small.contentSize.width, contentSize: sizing.size(atWidth: width))
+    }
+
+    /// A preset's layout (FR-3).
+    func layout(of preset: MeterSize) -> MeterLayout {
+        layout(atWidth: sizing.size(of: preset).width)
     }
 }

@@ -7,8 +7,9 @@
 //  (FR-6, FR-7, FR-27, requirements §6). Increment 2.2, revised in
 //  Increment 2.3 for system time at the base of each bar, the key's order,
 //  and the labels' averages, in Increment 3.3 for colors chosen in
-//  View → Colors, and in Increment 5.3 for layers in place of `Canvas`,
-//  which leaked a timer on every redraw at Medium and Large.
+//  View → Colors, in Increment 5.3 for layers in place of `Canvas`, which
+//  leaked a timer on every redraw at Medium and Large, and in Increment 5.4
+//  for any size, Small's layout times the scale.
 //  `MeterLayout` says where everything goes; this file adds the colors and
 //  text, snaps the bars to whole pixels, and puts the text where `Canvas`
 //  put it. The bar geometry, the text and its place are pure functions, so
@@ -19,11 +20,12 @@ import SwiftUI
 import AppKit
 import QuartzCore
 
-/// The meter at one size, showing one sample. It takes plain values rather
+/// The meter at one size, any scale of Small, showing one sample. It takes plain values rather
 /// than the sampler, so every bar and figure in a frame comes from the same
 /// sample (FR-12), and a test can draw it with made-up readings.
 struct MeterView: View {
-    /// Where everything goes at the current size.
+    /// Where everything goes at the current size: Small's layout times its
+    /// scale (FR-3).
     let layout: MeterLayout
 
     /// The latest update, or nil before the first reading: the dash state
@@ -55,7 +57,8 @@ private struct MeterLayers: NSViewRepresentable {
 }
 
 /// The meter as a tree of Core Animation layers (requirements §6). The tree
-/// is built for one layout at one display scale. After that, an update
+/// is built for one layout at one display scale, so it's built again at each
+/// size a drag passes through (design §8 item 8). After that, an update
 /// changes only what changed, such as a bar's parts or a figure, and
 /// nothing animates. The colors follow the window's appearance.
 final class MeterLayerView: NSView {
@@ -197,7 +200,9 @@ final class MeterLayerView: NSView {
             let end = CGPoint(x: x, y: row.midY)
             x -= MeterDrawing.textWidth(Self.keyText(part, metrics: metrics, color: .black).size().width, scale: scale)
                 + metrics.keyDotGap
-            let diameter = metrics.keyDotDiameter
+            // On whole pixels, so the dot's edge is as sharp at a scale, such
+            // as Medium's 10.5 points, as at Small's 7.
+            let diameter = max(MeterDrawing.snap(metrics.keyDotDiameter, scale: scale), 1 / scale)
             let dot = Self.stillLayer()
             dot.frame = CGRect(x: MeterDrawing.snap(x - diameter, scale: scale),
                                y: MeterDrawing.snap(row.midY - diameter / 2, scale: scale),
@@ -226,7 +231,7 @@ final class MeterLayerView: NSView {
             // The parts in the track's own coordinates: system time at the
             // bottom and user time above it (FR-9, design §3).
             let fills = usage.map { MeterDrawing.fills(in: CGRect(origin: .zero, size: bar.track.bounds.size),
-                                                       usage: $0, scale: scale) }
+                                                       usage: $0, scale: scale, gap: metrics.partGap) }
             Self.set(bar.system, frame: fills?.system, color: colors.system)
             Self.set(bar.user, frame: fills?.user, color: colors.user)
             // Centered under the bar (FR-11).
@@ -422,8 +427,9 @@ nonisolated struct MeterColors: Equatable {
 
 /// The parts of drawing that are plain arithmetic.
 nonisolated enum MeterDrawing {
-    /// The gap between a bar's user and system parts, in points (design §3).
-    static let partGap: CGFloat = 1
+    /// The gap between a bar's user and system parts at Small, in points
+    /// (design §3). Other sizes scale it (`MeterMetrics.partGap`).
+    static let partGap: CGFloat = MeterMetrics.small.partGap
 
     /// A position rounded to the nearest whole pixel.
     static func snap(_ value: CGFloat, scale: CGFloat) -> CGFloat {
@@ -459,15 +465,19 @@ nonisolated enum MeterDrawing {
     /// small to show.
     ///
     /// The top of the bar is always the core's total, to the nearest pixel.
-    /// When both parts show, the 1 pt gap between them comes out of the bottom
-    /// of the user part. A user part too thin to keep a pixel after the gap is
-    /// drawn without one, touching the system part, so it doesn't vanish.
-    static func fills(in track: CGRect, usage: CPUUsage, scale: CGFloat) -> (system: CGRect?, user: CGRect?) {
+    /// When both parts show, the gap between them, 1 pt at Small and scaled
+    /// with the rest at other sizes (design §8 item 10), comes out of the
+    /// bottom of the user part. It's rounded to whole pixels, and at least
+    /// one. A user part too thin to keep a pixel after the gap is drawn
+    /// without one, touching the system part, so it doesn't vanish.
+    static func fills(in track: CGRect, usage: CPUUsage, scale: CGFloat,
+                      gap pointGap: CGFloat = MeterDrawing.partGap) -> (system: CGRect?, user: CGRect?) {
         func clamped(_ share: Double) -> CGFloat { CGFloat(min(max(share, 0), 1)) }
         let busyHeight = snap(track.height * clamped(usage.busy), scale: scale)
         let systemHeight = min(snap(track.height * clamped(usage.system), scale: scale), busyHeight)
         let userHeight = busyHeight - systemHeight
         let pixel = 1 / scale
+        let partGap = max(snap(pointGap, scale: scale), pixel)
 
         // Heights are whole pixels, so "at least half a pixel" means "at least
         // one", without trusting floating point to land exactly.

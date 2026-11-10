@@ -5,7 +5,7 @@
 **Date:** November 9, 2026
 **Companion to:** `cpu-meter-requirements.md` (v1.18) and `cpu-meter-ui-design.md`
 **Status:** Approved by Chris on Nov 2, 2026, with the test machine, push and app icon instructions below.
-**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Chris then asked for some design changes and new wording, recorded in requirements v1.9 and v1.10, and Increment 2.3 (design changes), which builds them, was confirmed on the M4 the same day. Increment 2.4 (other core counts) was confirmed on the M4 and the M1 the same day, completing Phase 2. Chris then asked for keyboard shortcuts for the three sizes, recorded in requirements v1.11, and Increment 3.1 (size shortcuts), which builds them, was confirmed on the M4 the same day. Increment 3.2 (Refresh Rate) was confirmed on the M4 the same day, after Chris's change to how a new rate takes effect (requirements v1.12), as its Results record. Increment 3.3 (Colors) was confirmed on the M4 and the M1 on Nov 6, 2026, with Phase 3's M1 pass. Chris then asked for new keyboard shortcuts, recorded in requirements v1.13, and Increment 3.4 (keyboard shortcuts), which builds them, was confirmed on the M4 the same day, completing Phase 3. Increment 4.1 (pause when not visible), with requirements v1.14's timing, was confirmed on the M4 the same day, starting Phase 4. Increment 4.2 (failures, sleep and needless redraws) was confirmed on the M4 and the M1 the same day, completing Phase 4 with its M1 pass. Chris then updated both Mac minis from macOS 27.0.1 to 27.2, and the macOS 27.2 recheck, Claude's automated checks on the M4 and Chris's short pass on each Mac, was confirmed the same day. Increment 5.2 (footprint)'s first runs, on Nov 6–7, 2026, found that SwiftUI's `Canvas` leaks a system timer on every redraw at Medium and Large, so CPU use climbs. Chris chose to move the drawing to Core Animation (requirements v1.16), which the new Increment 5.3 builds, and 5.2's runs are repeated after it. Increment 5.3 (Core Animation drawing) was confirmed on the M4 and the M1 on Nov 7, 2026: the meter looks as it did, and its timer count stays flat at every size. Increment 5.2's runs were repeated on Nov 8, 2026, and Chris confirmed 5.2 (footprint) the same day: CPU and memory stay level on both Macs, at 0.370% of one core on the M4 and 0.570% on the M1 at Medium, and the three sizes cost the same. Chris then chose free sizing, a plain zoom of Small dragged from any edge or corner, and approved requirements v1.17 for it the same day, then the UI design's revision for it, and the design canvas was updated to match. This plan's v1.10 adds **Increment 5.4, free sizing**, with a probe first, so Accuracy, the M3 MacBook Air check and the release are now 5.5, 5.6 and 5.7. Chris approved v1.10 the same day. 5.4's probe ended on Nov 9, 2026, after three rounds and Chris's drags of every edge and corner; this plan's v1.11 records it, with requirements v1.18, and Chris approved both the same day. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
+**Progress:** Increment 0.1 (the Xcode project and an empty window) was confirmed by Chris on Nov 4, 2026, and Increment 5.1 (the app icon) the same day. Increment 0.2 (sizes, Keep on Top and remembered position) was confirmed on the M4 the same day, after three tests, as its Results record. Increment 0.3 (snap resizing) was confirmed on the M4 and the M1 the same day, completing Phase 0. Increment 1.1 (reading the counters) was confirmed the same day. Increment 1.2 (core types) was confirmed on the M4 and the M1 the same day. Increment 1.3 (sample on a timer) was confirmed on the M4 and the M1 the same day, completing Phase 1. Increment 2.1 (layout math) was confirmed on the M4 on Nov 5, 2026, and Increment 2.2 (bars on screen) the same day. Chris then asked for some design changes and new wording, recorded in requirements v1.9 and v1.10, and Increment 2.3 (design changes), which builds them, was confirmed on the M4 the same day. Increment 2.4 (other core counts) was confirmed on the M4 and the M1 the same day, completing Phase 2. Chris then asked for keyboard shortcuts for the three sizes, recorded in requirements v1.11, and Increment 3.1 (size shortcuts), which builds them, was confirmed on the M4 the same day. Increment 3.2 (Refresh Rate) was confirmed on the M4 the same day, after Chris's change to how a new rate takes effect (requirements v1.12), as its Results record. Increment 3.3 (Colors) was confirmed on the M4 and the M1 on Nov 6, 2026, with Phase 3's M1 pass. Chris then asked for new keyboard shortcuts, recorded in requirements v1.13, and Increment 3.4 (keyboard shortcuts), which builds them, was confirmed on the M4 the same day, completing Phase 3. Increment 4.1 (pause when not visible), with requirements v1.14's timing, was confirmed on the M4 the same day, starting Phase 4. Increment 4.2 (failures, sleep and needless redraws) was confirmed on the M4 and the M1 the same day, completing Phase 4 with its M1 pass. Chris then updated both Mac minis from macOS 27.0.1 to 27.2, and the macOS 27.2 recheck, Claude's automated checks on the M4 and Chris's short pass on each Mac, was confirmed the same day. Increment 5.2 (footprint)'s first runs, on Nov 6–7, 2026, found that SwiftUI's `Canvas` leaks a system timer on every redraw at Medium and Large, so CPU use climbs. Chris chose to move the drawing to Core Animation (requirements v1.16), which the new Increment 5.3 builds, and 5.2's runs are repeated after it. Increment 5.3 (Core Animation drawing) was confirmed on the M4 and the M1 on Nov 7, 2026: the meter looks as it did, and its timer count stays flat at every size. Increment 5.2's runs were repeated on Nov 8, 2026, and Chris confirmed 5.2 (footprint) the same day: CPU and memory stay level on both Macs, at 0.370% of one core on the M4 and 0.570% on the M1 at Medium, and the three sizes cost the same. Chris then chose free sizing, a plain zoom of Small dragged from any edge or corner, and approved requirements v1.17 for it the same day, then the UI design's revision for it, and the design canvas was updated to match. This plan's v1.10 adds **Increment 5.4, free sizing**, with a probe first, so Accuracy, the M3 MacBook Air check and the release are now 5.5, 5.6 and 5.7. Chris approved v1.10 the same day. 5.4's probe ended on Nov 9, 2026, after three rounds and Chris's drags of every edge and corner; this plan's v1.11 records it, with requirements v1.18, and Chris approved both the same day. Increment 5.4 (free sizing) was confirmed on the M4 and the M1 on Nov 10, 2026. The window can be any size from Small up, dragged from any edge or corner, with its shape kept and the edges the UI design names held at every step. CPU and memory stay level at every size, and 5.4 costs the same as the build before it. Before writing any code, Claude says which files will change and waits for Chris's go-ahead *(Chris's instruction, Nov 4, 2026)*.
 **Approach:** Small, verifiable increments. Each one has a single goal, a concrete build step, and a way to confirm it works before moving on. We do not start an increment until the previous one is verified.
 
 ---
@@ -799,6 +799,95 @@ Phases 0–4 were confirmed on macOS 27.0.1. After Increment 4.2, Chris updated 
 
     Then a shorter pass on the M1, since every Mac draws the new sizes: a drag, the presets and a relaunch.
 - **Done when:** Chris confirms the drags and the presets on the M4 and the M1, the widths match requirements §6, and the timer count stays flat at every size tested.
+- **Result, the code (Nov 9, 2026), after Chris's go-ahead:** the five files named above changed, and no others.
+  - `MeterSize.swift`: Small, Medium and Large are scales of 1, 1.5 and 2. `MeterSizing` holds Small's content size and works out the rest:
+    - a size from a width or a scale, by the rounding rule;
+    - the scale saved for a width, exactly a preset's at a preset;
+    - the largest size of the shape that fits an area;
+    - the kind of drag, from where the mouse is when it starts, where within 24 points of a side and of the top or bottom counts as a corner;
+    - the answer at each step of a drag, the top or left edge held on a side drag, and the window brought on screen.
+
+    A size saved by an earlier build carries over as its preset's scale. The snap rule is gone.
+  - `MeterLayout.swift`: the width rule and "Perf" are worked out once, at Small, and a layout at any other width is Small's times its scale.
+  - `MeterView.swift`: the text sizes, corner radii and the gap between a bar's parts scale with the layout. The gap is drawn in whole pixels, at least one.
+  - `WindowAccess.swift`: an object in front of SwiftUI's window handling, as in the probe's round 3, answers each step of a resize and the green button's question. It passes every other question on to SwiftUI. It works out the largest size for the window's screen and passes it up, again when the screen or its visible area changes. The presets keep the top-left corner, and a drag's end keeps the window on screen and saves the new scale.
+  - `CPUMeterApp.swift`:
+    - the saved scale (`meterScale`) in place of the saved size, with a saved `meterSize` carried over once and left in place;
+    - View → Size checked only at a preset's width;
+    - the meter's frame from Small up to the largest size, which sets the window's limits.
+  - **One fix, found by the real drags below.** A top corner dragged up into the menu bar made the window grow past the room above it, and macOS pushed it back down. So the opposite corner moved, held on only 112 of 240 steps, and the top edge jumped up to 8 points into the menu bar and back. Now, while a drag moves the top edge, the size stops where the top reaches the top of the screen's visible area, so the opposite edge or corner stays in place (FR-22). After the fix, the same drags held on 120 of 120 and 240 of 240 steps, with the top exactly at the menu bar.
+- **Checks on the M4 (Nov 9, 2026).** Debug and Release build with no warnings. Chris's settings were saved before every run that launched the app and restored exactly after.
+  - **Headless** (`test54`): 295,844 checks, none failed.
+    - **Layouts:** all 19 layouts and both fallback rows, at the presets and at scales between and beyond them up to the M4's largest, 168 scaled layouts in all. Medium and Large match requirements §6, "Perf" appears at every size on the 10-core M4 and M5 and the MacBook Neo, and nowhere else, every label fits within its own group at its widest, and the figures stay separate at full load. The text and top-row measurements are in UI design §7.
+    - **Saved scales:** 54,089 widths, from Small to the largest, come back exactly from their saved scale. A Small, Medium or Large saved by an earlier build carries over.
+    - **Resize answers:** 18,980 answers in shape and within the limits. The probe's round 3 drags, played back, give all 232 logged answers. Round 2's 703 answers come out in shape, and its corner drags change direction 0 times, where round 2 changed 105 times.
+    - **Not a drag:** a resize that isn't a drag, such as Fill or a tiling layout, keeps a size already in shape, and otherwise takes the largest size of the shape that fits. So the bottom-half tile gives 1103 × 673 rather than the probe's 1104.
+  - **The saved checks,** adapted where they held Medium's and Large's old numbers:
+    - **2.3's geometry, 14,662,435 checks.** It now also runs at a dragged size (1.22 × Small) and the M4's largest, with the gap between a bar's parts scaled. At a fractional scale, the tracks' ends snap to the nearest pixel, as their sides do. A gap between bars may be up to 1.5 pixels from the design's there, against 1 pixel before, which held for Small's numbers. Within a group, gaps differ by at most 1 pixel, and Small is unchanged.
+    - **2.4's logic, 3,463,960 checks,** with Medium's and Large's widths from requirements §6 v1.18 and "Perf" at every size where Small has it.
+    - **4.2's pure checks, 63,** with a preset's layout as Small's times its scale. Its 3 live checks pass too.
+  - **Renders:**
+    - At Small, all 420 of 5.3's test renders are the same pixel for pixel.
+    - The layers against the `Canvas` meter from before 5.3, given the scaled gap, off screen at display scales 1 and 2. That covers all 19 layouts and both fallback rows, at the presets, a dragged size (1.22 × Small) and 3 × Small, through 5.3's six states in Dark and Light: 2,520 cases, all pass. No pixel differs by more than 29 of 255. Differences over 20 away from the curves come only at scaled sizes at display scale 1, where text at a fractional size is anti-aliased differently.
+  - **The running app** (the Debug build, `runapp54.sh`):
+    - Chris's saved Large carried over as scale 2, 492 × 332, with `meterSize` left in place. A saved scale wins over a saved size.
+    - The window's limits are 246 × 182 to 2259 × 1409, which is 2259 × 1377 of meter under the 32-point title bar. Keep on Top gives level 3, and off gives 0.
+    - The object in front of SwiftUI answers the two resize questions and passes the rest to SwiftUI's own window controller. Asked directly, 400 × 400 gives 400 × 276, 100 × 100 gives Small, 5000 × 5000 gives the largest, and a size in shape, such as 300 × 215, is kept.
+    - ⇧⌘S, ⇧⌘M and ⇧⌘L keep the top-left corner, and the checkmark follows, with none at a dragged size. Near the right edge, Large moves left to stay on screen.
+    - A drag's end in shape is kept and its scale saved. One out of shape takes the shape (500 × 300 gives 439 × 300), and one partly off the right or bottom edge comes back on screen.
+    - The green button, from 300 wide and from 800 wide, goes to Large with the top-left kept, then back to exactly the size before.
+    - A scale too large for the screen, whether saved while running or at launch, gives the largest size, saved as 9.1829.
+    - A relaunch after ⌘Q keeps a dragged size and its place. File → Close quits with status 0.
+    - A change from 6 to 18 simulated cores keeps the scale. At 1.5 the window goes from 360 to 621 wide, moving left near the right edge to stay on screen. At a dragged scale it goes from 293 to 505.
+  - **Real drags** (the Release build, `realdrag54`, with posted mouse events, so the cursor moved on screen): every edge and corner, out and back, down past Small, into the menu bar and from just below it. In all, 3,240 steps, every one in Small's shape, with the edges UI design §2 names held on every step.
+  - **CPU during a drag:** 8–14% of one core while the window is being dragged, 11.1% over a 26.6-second run of corner drags between Small and about 1,150 wide. At rest before and after, 0.1%.
+  - **The Release build for 10 minutes,** each copy with a 1-second refresh, Keep on Top on and its own test bundle ID:
+
+    | Copy | Timers at minutes 1, 4, 7 and 10 | CPU, minutes 1–10 | Resident |
+    |---|---|---|---|
+    | Small | 40 at each | 0.391% of one core | 88.3 → 88.2 MB |
+    | Dragged to 300 wide | 40 at each | 0.411% | 88.7 → 88.7 MB |
+    | Largest, 2259 wide | 42 at each | 0.450% | 103.6 → 87.5 MB |
+
+    The timers stay flat at every size. The largest was about a fifth above 5.3's 0.37–0.38%, so 5.2's hour was repeated.
+  - **5.2's hour, repeated** (`cpucheck54h.sh`): the largest size behind, with two Small copies and two copies at 300 wide in front, for 65 minutes, the first 5 warm-up:
+
+    | Copy | CPU, minutes 5–65 | Trend per hour | Timers, minute 4 → 65 | Footprint, minute 5 → 65 |
+    |---|---|---|---|---|
+    | Largest | 0.463% | −0.002% | 53 → 53 | 45.0 → 45.6 MB |
+    | Small 1 | 0.457% | +0.001% | 53 → 53 | 30.6 → 30.7 MB |
+    | Small 2 | 0.444% | −0.000% | 55 → 55 | 30.5 → 30.5 MB |
+    | 300 wide 1 | 0.454% | +0.002% | 55 → 55 | 30.8 → 30.9 MB |
+    | 300 wide 2 | 0.441% | +0.000% | 56 → 53 | 30.4 → 29.6 MB |
+
+    - **Level at every size:** every 10-minute figure fell between 0.438% and 0.465%, with no settling this time.
+    - **The largest costs about the same as Small:** it differs from the higher Small copy by less than the two Small copies differ from each other. Its extra 15 MB of footprint is its larger layers.
+    - **Memory flat:** after minute 20, each footprint held within 0.45 MB at the largest and 0.03 MB at the others. The main thread was 99.5% idle at the largest.
+    - **The screensaver didn't start during the run.** The script keeps the display awake. macOS's log shows the screensaver held off at 15:47, 16:07 and 16:27, then starting at 16:47, 47 seconds after the run ended.
+
+    Every copy ran higher than 5.2's 0.33–0.37% once settled, and Small's footprint was 30.5 MB against 5.2's 25.5–26.5. So the two builds were compared directly.
+  - **Side by side with the build before free sizing** (`cpucheck54ab.sh`): two copies of be7f4eb's build, whose app code is 5.3's, and two of 5.4's, all at Small, for 12 minutes, the first 2 warm-up:
+
+    | Build | CPU, minutes 2–12, each copy | Mean | Footprint at the end, mean |
+    |---|---|---|---|
+    | be7f4eb | 0.457%, 0.465% | 0.461% | 30.7 MB |
+    | 5.4 | 0.447%, 0.433% | 0.440% | 30.2 MB |
+
+    **5.4 costs the same as the build before it.** The gap between the builds is about the size of the gap between two copies of one build, and both builds' timers stayed flat, at 53–55. So the higher figures in the hour came from the Mac's state that day, not from 5.4.
+- **Chris on the M4 (Nov 9, 2026),** from Xcode, all 11 tests passed:
+  1. the first launch at Large, carried over;
+  2. each edge and corner dragged out and back, with the edges held, no flicker and smooth corners;
+  3. the stops at Small and at the largest size;
+  4. a top corner into the menu bar, and edges dragged off screen;
+  5. the presets, their shortcuts and the checkmark;
+  6. the green button from below and above Large, and back;
+  7. Fill and a tiling layout;
+  8. the Dock hidden and shown at the largest size;
+  9. a relaunch at a dragged size;
+  10. the test loads in Light and Dark, and a color pick at a large size;
+  11. a comparison with the design canvas.
+- **Chris on the M1 (Nov 9, 2026),** from `CPUMeter-5.4-be7f4eb-dirty.zip`, the Release build above: a drag from an edge and a corner, the presets and the checkmark, and a relaunch at a dragged size. All passed.
+- **Confirmed by Chris on the M4 and the M1 (Nov 10, 2026): "Confirm 5.4."** The scripts and every result are kept in `local-tests/inc5.4/`.
 
 ### Increment 5.5 — Accuracy
 - **Goal:** Confirm the readings on both Macs. (NFR-6)
