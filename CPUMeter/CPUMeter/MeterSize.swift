@@ -6,7 +6,9 @@
 //  any scale, the largest size a screen holds, and the size to take at each
 //  step of a resize. Increment 0.3, rewritten in Increment 5.4 for free
 //  sizing (requirements v1.17 and v1.18): every size is Small enlarged.
-//  Kept free of windows and views, so every rule can be tested on its own.
+//  Increment 5.7 adds where a press of the green button takes the window
+//  (requirements v1.20). Kept free of windows and views, so every rule can
+//  be tested on its own.
 //
 
 import CoreGraphics
@@ -222,5 +224,53 @@ nonisolated struct MeterSizing: Equatable, Sendable {
         if frame.minY < visible.minY { frame.origin.y = visible.minY }
         if frame.maxY > visible.maxY { frame.origin.y = visible.maxY - frame.height }
         return frame
+    }
+
+    // MARK: - The green button (requirements §8 item 21, design §8 item 5)
+
+    /// One press of the green button: the window's frame before it, and the
+    /// frame the press took the window to.
+    struct ZoomPress: Equatable, Sendable {
+        var from: CGRect
+        var to: CGRect
+    }
+
+    /// True when two frames are the same to within half a point.
+    static func isSameFrame(_ a: CGRect, _ b: CGRect) -> Bool {
+        abs(a.minX - b.minX) < 0.5 && abs(a.minY - b.minY) < 0.5
+            && abs(a.width - b.width) < 0.5 && abs(a.height - b.height) < 0.5
+    }
+
+    /// Where a press of the green button takes the window, given its frame
+    /// now, the last press, the title bar's height, the largest content size
+    /// and the screen's visible area (Cocoa coordinates, y up):
+    /// - back to exactly the frame the last press started from, if the window
+    ///   is still where that press left it. Kept within the largest size and
+    ///   on screen, in case the screen changed since;
+    /// - to Large, with the top-left corner in place, if the window is at the
+    ///   largest size;
+    /// - otherwise to the largest size. It fills the visible area from top to
+    ///   bottom, so the top goes to the top of the area, and the left edge
+    ///   stays where it was unless the window would run off the right, when
+    ///   it moves left just far enough (FR-22).
+    /// A press after the window was moved or resized no longer matches where
+    /// the last press left it, so it counts as a first press.
+    func zoomTarget(from frame: CGRect, lastPress: ZoomPress?, titleBar: CGFloat,
+                    largest: CGSize, visible: CGRect) -> CGRect {
+        if let lastPress, Self.isSameFrame(frame, lastPress.to) {
+            var back = lastPress.from
+            if back.width > largest.width + 0.001 {
+                let content = clamped(width: back.width, largest: largest)
+                back = CGRect(x: back.minX, y: back.maxY - content.height - titleBar,
+                              width: content.width, height: content.height + titleBar)
+            }
+            return Self.onScreen(back, visible: visible)
+        }
+        let atLargest = frame.width >= largest.width - 0.5
+        let content = clamped(width: atLargest ? size(of: .large).width : largest.width, largest: largest)
+        let height = content.height + titleBar
+        let top = atLargest ? frame.maxY : visible.maxY
+        let target = CGRect(x: frame.minX, y: top - height, width: content.width, height: height)
+        return Self.onScreen(target, visible: visible)
     }
 }

@@ -9,7 +9,9 @@
 //  core count changes (Increment 4.2), and, since Increment 5.4, keeping the
 //  window in Small's shape at any size, from Small up to the largest size
 //  its screen holds (requirements v1.17 and v1.18). Increment 0.3's snapping
-//  to three sizes is gone.
+//  to three sizes is gone. Since Increment 5.7, the green button takes the
+//  window to its largest size and back, and from the largest to Large
+//  (requirements v1.20).
 //
 
 import SwiftUI
@@ -19,8 +21,11 @@ import AppKit
 /// it sits in and does what SwiftUI can't:
 /// - sets the window level for Keep on Top (FR-2);
 /// - keeps the window in Small's shape at every step of a drag from any edge
-///   or corner, with the edges design §2 names held in place, and sizes the
-///   green button's zoom (FR-3d, requirements §8 items 20–22);
+///   or corner, with the edges design §2 names held in place (FR-3d,
+///   requirements §8 items 20 and 22);
+/// - takes the window where a press of the green button goes: to the
+///   largest size and back, or from the largest to Large (requirements §8
+///   item 21, design §8 item 5);
 /// - works out the largest size the window's screen holds and passes it up,
 ///   for the content's own size limits (FR-22, design §8 item 13);
 /// - sets the window to the saved scale at launch, and to a preset chosen in
@@ -78,10 +83,11 @@ struct WindowAccess: NSViewRepresentable {
     }
 }
 
-/// Sits in front of SwiftUI's window delegate. It answers the window's two
-/// sizing questions itself, what size to take at each step of a resize and
-/// what size the green button zooms to, and hands every other delegate
-/// message to SwiftUI's, which it holds on to (requirements §6).
+/// Sits in front of SwiftUI's window delegate. It answers the window's
+/// sizing questions itself, what size to take at each step of a resize, what
+/// frame the green button zooms to and whether macOS should zoom it, and
+/// hands every other delegate message to SwiftUI's, which it holds on to
+/// (requirements §6).
 private final class ShapeDelegate: NSObject, NSWindowDelegate {
     /// SwiftUI's own delegate. Held strongly: a window holds its delegate
     /// weakly, and this one now stands in its place.
@@ -92,6 +98,10 @@ private final class ShapeDelegate: NSObject, NSWindowDelegate {
 
     /// The frame the green button zooms to.
     var standardFrame: ((NSWindow, NSRect) -> NSRect)?
+
+    /// Whether macOS should zoom the window itself, asked at each press of
+    /// the green button.
+    var shouldZoom: ((NSWindow) -> Bool)?
 
     nonisolated override func responds(to aSelector: Selector!) -> Bool {
         if super.responds(to: aSelector) { return true }
@@ -113,6 +123,12 @@ private final class ShapeDelegate: NSObject, NSWindowDelegate {
     /// SwiftUI doesn't answer this one.
     func windowWillUseStandardFrame(_ window: NSWindow, defaultFrame newFrame: NSRect) -> NSRect {
         standardFrame?(window, newFrame) ?? newFrame
+    }
+
+    /// SwiftUI's answer counts first, if it gives one.
+    func windowShouldZoom(_ window: NSWindow, toFrame newFrame: NSRect) -> Bool {
+        if original?.windowShouldZoom?(window, toFrame: newFrame) == false { return false }
+        return shouldZoom?(window) ?? true
     }
 }
 
@@ -167,6 +183,10 @@ final class WindowAccessView: NSView {
     /// False until the window has been set to the saved scale at launch.
     private var isReady = false
 
+    /// The green button's last press, which the next press goes back from
+    /// while the window is still where it left it (design §8 item 5).
+    private var lastPress: MeterSizing.ZoomPress?
+
     init(layouts: MeterLayouts) {
         self.layouts = layouts
         super.init(frame: .zero)
@@ -175,6 +195,9 @@ final class WindowAccessView: NSView {
         }
         shapeDelegate.standardFrame = { [weak self] window, frame in
             self?.zoomFrame(for: window) ?? frame
+        }
+        shapeDelegate.shouldZoom = { [weak self] window in
+            self?.zoom(window) ?? true
         }
     }
 
@@ -308,13 +331,39 @@ final class WindowAccessView: NSView {
         return NSSize(width: content.width, height: content.height + bar)
     }
 
-    /// The green button's frame: Large, or the largest size if Large doesn't
-    /// fit, with the top-left corner in place, on screen (design §8 item 5,
-    /// requirements §8 item 21). macOS keeps the size the window had and goes
-    /// back to it on the next press.
+    /// Where the next press of the green button takes the window: to the
+    /// largest size, back to where the last press started, or from the
+    /// largest to Large (requirements §8 item 21, design §8 item 5).
     private func zoomFrame(for window: NSWindow) -> NSRect {
-        let content = sizing.clamped(width: sizing.size(of: .large).width, largest: largestSize(for: window))
-        return frame(for: content, keepingTopLeftOf: window.frame, in: window)
+        guard let visible = (window.screen ?? NSScreen.main)?.visibleFrame else { return window.frame }
+        return sizing.zoomTarget(from: window.frame, lastPress: lastPress,
+                                 titleBar: titleBarHeight(of: window),
+                                 largest: largestSize(for: window), visible: visible)
+    }
+
+    /// A press of the green button, Window → Zoom, or a double-click on the
+    /// title bar. CPUMeter moves the window itself, animated as macOS would,
+    /// and tells macOS not to, so macOS's own idea of zoomed and unzoomed
+    /// doesn't decide where it goes. Until 5.7, at Large with nothing to go
+    /// back to, macOS took the window to an in-between size of its own.
+    private func zoom(_ window: NSWindow) -> Bool {
+        let start = window.frame
+        let target = zoomFrame(for: window)
+        let goingBack = lastPress.map { MeterSizing.isSameFrame(start, $0.to) } ?? false
+        lastPress = goingBack ? nil : MeterSizing.ZoomPress(from: start, to: target)
+        guard target != start else { return false }
+        // After macOS has finished with the press.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.window === window, window.frame == start else { return }
+            self.isSettingFrame = true
+            window.setFrame(target, display: true, animate: true)
+            self.isSettingFrame = false
+            // In shape and on screen, with its scale saved, as after any
+            // resize; and where the window really ended, for the next press.
+            self.settle(window)
+            if !goingBack { self.lastPress?.to = window.frame }
+        }
+        return false
     }
 
     // MARK: - Resizing
