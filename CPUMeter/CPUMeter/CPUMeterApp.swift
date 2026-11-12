@@ -6,7 +6,8 @@
 //  from any edge or corner or chosen from three presets in the menu, with
 //  ⇧⌘S, ⇧⌘M and ⇧⌘L, five refresh rates chosen from the menu or with ⌘1–⌘5,
 //  the two bar colors, and Keep on Top, each remembered across launches, as
-//  is the window's position.
+//  is the window's position. File → Close closes the About box or the color
+//  chooser, and never the meter.
 //  `MeterSize.swift` holds the presets and the sizing rules,
 //  `MeterLayout.swift` works out Small's width on this Mac and the layout at
 //  any size, `MeterView.swift` draws the meter, `BarColors.swift` holds the
@@ -45,8 +46,8 @@ struct CPUMeterApp: App {
     /// View → Keep on Top, on at first launch and remembered across launches (FR-2).
     @AppStorage("keepOnTop") private var keepOnTop = true
 
-    /// Closes the window for File → Close.
-    @Environment(\.dismissWindow) private var dismissWindow
+    /// Which window is in front, for File → Close (FR-25).
+    @State private var frontWindow = FrontWindow()
 
     /// Samples every core on a timer (Increment 1.3). Made with the app, so
     /// the core groups are known before the window opens.
@@ -108,12 +109,14 @@ struct CPUMeterApp: App {
                 // Reaches the window for what SwiftUI can't do: Keep on Top's
                 // level (FR-2), keeping Small's shape at any size (FR-3d),
                 // the largest size and staying on screen (FR-22), the saved
-                // scale (FR-20), and pausing sampling while the window can't
-                // be seen (FR-17).
+                // scale (FR-20), pausing sampling while the window can't be
+                // seen (FR-17), and telling the meter from the app's other
+                // windows for File → Close (FR-25).
                 .background(WindowAccess(keepOnTop: keepOnTop, scale: CGFloat(scale), layouts: layouts,
                                          onVisibilityChange: { sampler.setVisible($0) },
                                          onLargest: { largest = $0 },
-                                         onScale: { scale = Double($0) }))
+                                         onScale: { scale = Double($0) },
+                                         onWindow: { frontWindow.meter = $0 }))
                 // Sampling runs while the window is open and can be seen, at
                 // the chosen rate, and a new rate takes effect at once
                 // (FR-18d).
@@ -133,8 +136,8 @@ struct CPUMeterApp: App {
                 .onChange(of: sampler.topology) { _, topology in
                     layouts = MeterLayouts(topology: topology)
                 }
-                // Full screen is off, so the green button zooms to Large and
-                // back (requirements §8, item 21).
+                // Full screen is off, so the green button zooms to the largest
+                // size and back (requirements §8, item 21, Increment 5.7).
                 .windowFullScreenBehavior(.disabled)
         }
         // First launch only: top-left of the screen (FR-21). Later launches
@@ -149,22 +152,28 @@ struct CPUMeterApp: App {
         // floating level 3, and SwiftUI set it again on every scene update,
         // overriding the level `WindowAccess` set.
         .commands {
-            // File holds only Close (FR-25), and closing the window quits the
-            // app (FR-23). macOS's own Close and Close All live in this group,
-            // so replacing it leaves just our Close. Every other File group is
-            // left alone: replacing one, even with nothing, adds a stray
-            // separator line to File.
+            // File holds only Close (FR-25), which never closes the meter,
+            // since closing the meter quits the app (FR-23). macOS's own Close
+            // and Close All live in this group, so replacing it leaves just
+            // our Close. Every other File group is left alone: replacing one,
+            // even with nothing, adds a stray separator line to File.
             CommandGroup(replacing: .saveItem) {
-                // With the color chooser in front, ⌘W closes the chooser, as
-                // in other Mac apps, rather than the meter, which would quit.
+                // ⌘W closes the About box or the color chooser when either is
+                // in front, as in other Mac apps, and with the meter in front
+                // Close is grayed out (requirements v1.22). SwiftUI may bring
+                // the menu up to date late, so Close also checks for itself,
+                // and with the meter in front it does nothing. The chooser
+                // closes through `BarColors`, which then stops editing a
+                // color; any other window as its close button would close it.
                 Button("Close") {
                     if barColors.chooserIsKey {
                         barColors.closeChooser()
                     } else {
-                        dismissWindow(id: "main")
+                        frontWindow.other?.performClose(nil)
                     }
                 }
                 .keyboardShortcut("w")
+                .disabled(!frontWindow.otherInFront)
             }
 
             // The View menu (FR-24, design §5). Replacing the toolbar group also
@@ -223,6 +232,51 @@ private struct LiveMeter: View {
 
     var body: some View {
         MeterView(layout: layout, sample: sampler.sample, colorChoice: barColors.choice)
+    }
+}
+
+/// Which window is in front, for File → Close (FR-25). Close works only while
+/// a window other than the meter is key, the About box or the color chooser,
+/// so ⌘W never closes the meter, which would quit the app (FR-23).
+@Observable
+private final class FrontWindow {
+    /// The meter's window, from `WindowAccess` once the meter has joined it.
+    /// Until then no window counts as another.
+    @ObservationIgnored weak var meter: NSWindow? {
+        didSet { update() }
+    }
+
+    /// True while a window other than the meter is key, when Close is
+    /// enabled.
+    private(set) var otherInFront = false
+
+    @ObservationIgnored private var observers: [any NSObjectProtocol] = []
+
+    init() {
+        // Any of the app's windows becoming key or giving it up, the app
+        // becoming active or not included. Read on the next turn of the run
+        // loop, once macOS has settled which window is key.
+        let center = NotificationCenter.default
+        for name in [NSWindow.didBecomeKeyNotification, NSWindow.didResignKeyNotification] {
+            observers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.updateSoon() }
+            })
+        }
+    }
+
+    /// The key window, read when Close is chosen, if it isn't the meter.
+    var other: NSWindow? {
+        guard let meter, let key = NSApp.keyWindow, key !== meter else { return nil }
+        return key
+    }
+
+    private func updateSoon() {
+        DispatchQueue.main.async { [weak self] in self?.update() }
+    }
+
+    private func update() {
+        let now = other != nil
+        if now != otherInFront { otherInFront = now }
     }
 }
 

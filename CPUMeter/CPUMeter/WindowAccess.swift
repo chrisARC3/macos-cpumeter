@@ -11,7 +11,9 @@
 //  its screen holds (requirements v1.17 and v1.18). Increment 0.3's snapping
 //  to three sizes is gone. Since Increment 5.7, the green button takes the
 //  window to its largest size and back, and from the largest to Large
-//  (requirements v1.20).
+//  (requirements v1.20). Since Increment 5.8, it hands the window to the app,
+//  so that File → Close can tell the meter from the app's other windows
+//  (requirements v1.22).
 //
 
 import SwiftUI
@@ -33,7 +35,9 @@ import AppKit
 /// - keeps the window on screen after any of these, and passes the window's
 ///   scale up to be saved when a resize ends (FR-20, FR-22);
 /// - says when the window can or can't be seen, so sampling pauses while it
-///   can't (FR-17).
+///   can't (FR-17);
+/// - hands the window to the app, so that File → Close never closes the
+///   meter (FR-25).
 ///
 /// SwiftUI's `.windowLevel(.floating)` gave level 19 rather than AppKit's
 /// floating level 3, and kept setting it again on scene updates, so the scene
@@ -66,6 +70,10 @@ struct WindowAccess: NSViewRepresentable {
     /// saved (FR-20).
     let onScale: (CGFloat) -> Void
 
+    /// Called with the window once this view has joined it, so the app can
+    /// tell the meter from its other windows (FR-25).
+    let onWindow: (NSWindow) -> Void
+
     func makeNSView(context: Context) -> WindowAccessView {
         let view = WindowAccessView(layouts: layouts)
         updateNSView(view, context: context)
@@ -76,6 +84,7 @@ struct WindowAccess: NSViewRepresentable {
         view.onVisibilityChange = onVisibilityChange
         view.onLargest = onLargest
         view.onScale = onScale
+        view.onWindow = onWindow
         view.layouts = layouts
         view.keepOnTop = keepOnTop
         view.request(scale)
@@ -148,6 +157,7 @@ final class WindowAccessView: NSView {
     var onVisibilityChange: ((Bool) -> Void)?
     var onLargest: ((CGSize) -> Void)?
     var onScale: ((CGFloat) -> Void)?
+    var onWindow: ((NSWindow) -> Void)?
 
     private let shapeDelegate = ShapeDelegate()
 
@@ -291,6 +301,7 @@ final class WindowAccessView: NSView {
             self.reportLargest(fittingWindow: false)
             self.take(scale: self.requestedScale ?? MeterSize.medium.scale)
             self.isReady = true
+            self.onWindow?(window)
         }
     }
 
