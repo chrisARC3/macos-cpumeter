@@ -8,6 +8,11 @@ It measures usage **passively**: it reads the operating system's per-core counte
 and computes the change each interval. It keeps no history, writes no logs and needs
 no elevated privileges.
 
+![CPUMeter at the Large size on an M4: All cores 85%, Efficiency 91% and Perf 77%, with one bar per core, user time in blue above system time in orange](design/Sample.png)
+
+*At the Large size on an M4 (6 Efficiency and 4 Performance cores), in the dark
+appearance, under a synthetic load that keeps every core busy but not full.*
+
 > **Status: v1.0.** All 34 requirements, with their 20 sub-requirements, are met,
 > checked against the running app. See the
 > [build plan](docs/cpu-meter-build-plan.md) for the record of each increment, the
